@@ -1,13 +1,9 @@
 import express from "express";
+import { getAllLogs, createLog } from "../controllers/logs.controller.js";
 
 const router = express.Router();
 
-router.get("/", (req, res) => {
-  res.json([]);
-});
-
-router.post("/", (req, res) => {
-  res.json({ message: "log created" });
-});
+router.get("/", getAllLogs);
+router.post("/", createLog);
 
 export default router;
