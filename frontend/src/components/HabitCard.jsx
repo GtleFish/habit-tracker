@@ -5,6 +5,7 @@ import { formatTimeRange } from '../utils/timeConverter';
 export function HabitCard({ habit, logs, onDelete, onMarkComplete }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedLog, setSelectedLog] = useState(null);
 
   const getLast7Days = () => {
     const days = [];
@@ -53,18 +54,28 @@ export function HabitCard({ habit, logs, onDelete, onMarkComplete }) {
     const status = getStatusForDate(date);
     if (status === 'future') return;
     setSelectedDate(date);
+    setSelectedLog(getLogForDate(date));
     setModalOpen(true);
   };
 
   const handleModalSave = (startTime, endTime) => {
-    onMarkComplete(habit.id, selectedDate, startTime, endTime);
+    onMarkComplete(habit.id, selectedDate, startTime, endTime, selectedLog?.id);
     setModalOpen(false);
     setSelectedDate(null);
+    setSelectedLog(null);
   };
 
   const handleModalCancel = () => {
     setModalOpen(false);
     setSelectedDate(null);
+    setSelectedLog(null);
+  };
+
+  const handleLogDelete = (logId) => {
+    onMarkComplete(null, null, null, null, logId, true);
+    setModalOpen(false);
+    setSelectedDate(null);
+    setSelectedLog(null);
   };
 
   const getTooltip = (date) => {
@@ -110,8 +121,10 @@ export function HabitCard({ habit, logs, onDelete, onMarkComplete }) {
       <TimeInputModal
         isOpen={modalOpen}
         date={selectedDate}
+        log={selectedLog}
         onSave={handleModalSave}
         onCancel={handleModalCancel}
+        onDelete={handleLogDelete}
       />
     </div>
   );

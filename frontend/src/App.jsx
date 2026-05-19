@@ -64,10 +64,16 @@ function App() {
     }
   }
 
-  const handleMarkComplete = async (habitId, date, startTime, endTime) => {
+  const handleMarkComplete = async (habitId, date, startTime, endTime, logId, isDelete) => {
     try {
       setError(null)
-      await api.createLog(habitId, date, startTime, endTime)
+      if (isDelete) {
+        await api.deleteLog(logId)
+      } else if (logId) {
+        await api.updateLog(logId, startTime, endTime)
+      } else {
+        await api.createLog(habitId, date, startTime, endTime)
+      }
       await loadData()
     } catch (err) {
       setError('Failed to mark completion')

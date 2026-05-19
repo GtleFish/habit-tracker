@@ -1,18 +1,22 @@
 import { useState, useEffect } from 'react';
 import '../styles/modal.css';
 
-export function TimeInputModal({ isOpen, date, onSave, onCancel }) {
+export function TimeInputModal({ isOpen, date, log, onSave, onCancel, onDelete }) {
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!isOpen) {
+    if (isOpen && log) {
+      setStartTime(log.start_time || '');
+      setEndTime(log.end_time || '');
+      setError('');
+    } else if (isOpen) {
       setStartTime('');
       setEndTime('');
       setError('');
     }
-  }, [isOpen]);
+  }, [isOpen, log]);
 
   const formatTo12Hour = (time24) => {
     if (!time24) return '';
@@ -52,13 +56,22 @@ export function TimeInputModal({ isOpen, date, onSave, onCancel }) {
     onSave(startTime, endTime);
   };
 
+  const handleDelete = () => {
+    if (window.confirm('Bạn có chắc chắn muốn xóa đánh dấu này không?')) {
+      onDelete(log.id);
+    }
+  };
+
   if (!isOpen) return null;
+
+  const isEditing = !!log;
+  const modalTitle = isEditing ? `Chỉnh sửa khung giờ - ${date}` : `Đánh dấu hoàn thành - ${date}`;
 
   return (
     <div className="modal-overlay">
       <div className="modal-content">
         <div className="modal-header">
-          <h3>Đánh dấu hoàn thành - {date}</h3>
+          <h3>{modalTitle}</h3>
           <button className="modal-close" onClick={onCancel}>✕</button>
         </div>
 
@@ -106,7 +119,10 @@ export function TimeInputModal({ isOpen, date, onSave, onCancel }) {
 
         <div className="modal-footer">
           <button className="btn-cancel" onClick={onCancel}>Hủy</button>
-          <button className="btn-save" onClick={handleSave}>Lưu</button>
+          {isEditing && (
+            <button className="btn-delete-log" onClick={handleDelete}>Xóa</button>
+          )}
+          <button className="btn-save" onClick={handleSave}>{isEditing ? 'Cập nhật' : 'Lưu'}</button>
         </div>
       </div>
     </div>

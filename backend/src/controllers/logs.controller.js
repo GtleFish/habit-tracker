@@ -63,3 +63,78 @@ export const createLog = async (req, res, next) => {
   }
 };
 
+export const updateLog = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { startTime, endTime } = req.body;
+
+    if (!id) {
+      return res.status(400).json({
+        error: "Log ID is required"
+      });
+    }
+
+    if (startTime && endTime) {
+      const [start, end] = [startTime, endTime].map(t => t.split(':').map(Number));
+      const startMinutes = start[0] * 60 + start[1];
+      const endMinutes = end[0] * 60 + end[1];
+      if (endMinutes <= startMinutes) {
+        return res.status(400).json({
+          error: "End time must be after start time"
+        });
+      }
+    }
+
+    const connection = await pool.getConnection();
+
+    try {
+      await connection.query(
+        "UPDATE logs SET start_time = ?, end_time = ? WHERE id = ?",
+        [startTime || null, endTime || null, id]
+      );
+
+      const [log] = await connection.query(
+        "SELECT id, habit_id, DATE_FORMAT(date, '%Y-%m-%d') as date, start_time, end_time, created_at FROM logs WHERE id = ?",
+        [id]
+      );
+
+      connection.release();
+      res.status(200).json(log[0]);
+    } catch (err) {
+      connection.release();
+      throw err;
+    }
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const deleteLog = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        error: "Log ID is required"
+      });
+    }
+
+    const connection = await pool.getConnection();
+
+    try {
+      await connection.query(
+        "DELETE FROM logs WHERE id = ?",
+        [id]
+      );
+
+      connection.release();
+      res.status(200).json({ message: "Log deleted successfully" });
+    } catch (err) {
+      connection.release();
+      throw err;
+    }
+  } catch (err) {
+    next(err);
+  }
+};
+

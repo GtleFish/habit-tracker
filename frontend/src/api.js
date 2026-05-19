@@ -41,6 +41,24 @@ export const api = {
     return res.json();
   },
 
+  async updateLog(logId, startTime, endTime) {
+    const res = await fetch(`${API_URL}/api/logs/${logId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ startTime, endTime }),
+    });
+    if (!res.ok) throw new Error('Failed to update log');
+    return res.json();
+  },
+
+  async deleteLog(logId) {
+    const res = await fetch(`${API_URL}/api/logs/${logId}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) throw new Error('Failed to delete log');
+    return res.json();
+  },
+
   async checkHealth() {
     const res = await fetch(`${API_URL}/api/health`);
     if (!res.ok) throw new Error('Health check failed');
