@@ -1,121 +1,104 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
+import { useState, useEffect } from 'react'
 import './App.css'
+import { api } from './api'
+import { Sidebar } from './components/Sidebar'
+import { Header } from './components/Header'
+import { HabitsList } from './pages/HabitsList'
+import { AddHabit } from './pages/AddHabit'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [currentPage, setCurrentPage] = useState('habits')
+  const [habits, setHabits] = useState([])
+  const [logs, setLogs] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [submitLoading, setSubmitLoading] = useState(false)
+
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  const loadData = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const [habitsData, logsData] = await Promise.all([
+        api.getHabits(),
+        api.getLogs(),
+      ])
+      setHabits(habitsData || [])
+      setLogs(logsData || [])
+    } catch (err) {
+      setError('Failed to load data. Make sure backend is running.')
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleAddHabit = async (title, description) => {
+    try {
+      setSubmitLoading(true)
+      setError(null)
+      await api.createHabit(title, description)
+      await loadData()
+      setCurrentPage('habits')
+    } catch (err) {
+      setError('Failed to create habit')
+      console.error(err)
+    } finally {
+      setSubmitLoading(false)
+    }
+  }
+
+  const handleDeleteHabit = async (id) => {
+    if (window.confirm('Are you sure you want to delete this habit?')) {
+      try {
+        setError(null)
+        await api.deleteHabit(id)
+        await loadData()
+      } catch (err) {
+        setError('Failed to delete habit')
+        console.error(err)
+      }
+    }
+  }
+
+  const handleMarkComplete = async (habitId, date, startTime, endTime) => {
+    try {
+      setError(null)
+      await api.createLog(habitId, date, startTime, endTime)
+      await loadData()
+    } catch (err) {
+      setError('Failed to mark completion')
+      console.error(err)
+    }
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+    <div className="app-container">
+      <Sidebar currentPage={currentPage} onNavigate={setCurrentPage} />
+      <div className="main-content">
+        <Header />
+        {currentPage === 'habits' && (
+          <HabitsList
+            habits={habits}
+            logs={logs}
+            onDelete={handleDeleteHabit}
+            onMarkComplete={handleMarkComplete}
+            isLoading={loading}
+            error={error}
+          />
+        )}
+        {currentPage === 'add' && (
+          <AddHabit
+            onSubmit={handleAddHabit}
+            isLoading={submitLoading}
+            error={error}
+          />
+        )}
+      </div>
+    </div>
   )
 }
 

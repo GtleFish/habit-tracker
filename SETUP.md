@@ -1,171 +1,208 @@
-# Hướng dẫn Setup Habit Tracker
+# Habit Tracker - Setup Guide (MySQL)
 
-## Phương án 1: Chạy với Docker (Khuyến nghị)
+## Prerequisites
 
-### Bước 1: Cài đặt Docker
-- Tải Docker Desktop: https://www.docker.com/products/docker-desktop
+You need to have **MySQL** installed and running on your system.
 
-### Bước 2: Chạy toàn bộ hệ thống
+### Install MySQL
+
+#### Windows
+1. Download from: https://dev.mysql.com/downloads/mysql/
+2. Run the installer and follow the setup wizard
+3. Remember the password for the `root` user
+4. Make sure MySQL service is running
+
+#### macOS
 ```bash
-docker-compose up -d
+brew install mysql
+brew services start mysql
+mysql_secure_installation  # (optional setup)
 ```
 
-### Bước 3: Chạy migration
+#### Linux (Ubuntu/Debian)
 ```bash
-docker exec habit-tracker-backend npm run migrate
+sudo apt-get install mysql-server
+sudo systemctl start mysql
 ```
 
-### Bước 4: Kiểm tra
-- Backend: http://localhost:3000/api/health
-- Database: localhost:5432
+## Setup Steps
 
-### Dừng hệ thống
+### 1. Create Database
+Open MySQL and create the `habits` database:
+
 ```bash
-docker-compose down
+mysql -u root -p
 ```
 
-### Xem logs
-```bash
-docker-compose logs -f backend
-```
-
----
-
-## Phương án 2: Chạy Local (Development)
-
-### Bước 1: Cài đặt PostgreSQL
-- Windows: https://www.postgresql.org/download/windows/
-- Mac: `brew install postgresql`
-- Linux: `sudo apt install postgresql`
-
-### Bước 2: Tạo database
+Then in the MySQL prompt:
 ```sql
 CREATE DATABASE habits;
+exit
 ```
 
-### Bước 3: Setup Backend
+Or run directly:
+```bash
+mysql -u root -p -e "CREATE DATABASE habits;"
+```
 
+### 2. Update Backend Environment
+Edit `backend/.env` with your MySQL credentials:
+
+```env
+PORT=3000
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=your_password_here
+DB_NAME=habits
+```
+
+**Note:** 
+- If you didn't set a password during MySQL installation, leave `DB_PASSWORD` empty
+- Default MySQL port is `3306`
+- Default user is `root`
+
+### 3. Install Dependencies
 ```bash
 cd backend
 npm install
 ```
 
-Tạo file `.env`:
-```
-PORT=3000
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=your_password
-DB_NAME=habits
-NODE_ENV=development
+### 4. Initialize Database Tables
+```bash
+npm run init-db
 ```
 
-Chạy migration:
-```bash
-npm run migrate
-```
+You should see: `✓ Database tables created successfully`
 
-Chạy server:
+### 5. Start the Servers
+
+**Terminal 1 - Backend:**
 ```bash
+cd backend
 npm run dev
 ```
 
-### Bước 4: Setup Frontend
+Should show: `Server running on port 3000`
 
+**Terminal 2 - Frontend:**
 ```bash
 cd frontend
-npm install
 npm run dev
 ```
 
----
+Should show: `➜ Local: http://localhost:5174/`
 
-## Test API với curl hoặc Postman
+### 6. Open in Browser
+Go to: **http://localhost:5174**
 
-### 1. Health Check
-```bash
-curl http://localhost:3000/api/health
-```
+## Usage
 
-### 2. Tạo habit mới
-```bash
-curl -X POST http://localhost:3000/api/habits \
-  -H "Content-Type: application/json" \
-  -d "{\"name\":\"Exercise\",\"description\":\"Daily workout\"}"
-```
-
-### 3. Lấy danh sách habits
-```bash
-curl http://localhost:3000/api/habits
-```
-
-### 4. Đánh dấu hoàn thành
-```bash
-curl -X POST http://localhost:3000/api/logs \
-  -H "Content-Type: application/json" \
-  -d "{\"habit_id\":1,\"completed_date\":\"2024-01-15\",\"note\":\"Done!\"}"
-```
-
-### 5. Xem lịch sử
-```bash
-curl http://localhost:3000/api/logs?habit_id=1
-```
-
-### 6. Xóa habit
-```bash
-curl -X DELETE http://localhost:3000/api/habits/1
-```
-
----
+1. Click **"Add Habit"** in the sidebar
+2. Enter habit title and description
+3. Click **SUBMIT**
+4. Your habit appears on the **"My Habits"** page
+5. Click the day buttons to mark completion:
+   - ✓ (Green) = Completed
+   - ✕ (Red) = Missed
+   - ⊘ (Gray) = No data
+6. Click the **✕** button on a habit card to delete it
 
 ## Troubleshooting
 
-### Lỗi: "Connection refused" khi kết nối database
-- Kiểm tra PostgreSQL đã chạy: `docker ps` hoặc `pg_isready`
-- Kiểm tra thông tin kết nối trong `.env`
+### "Failed to load data" error
+- Make sure backend is running on port 3000
+- Check `.env` file has correct MySQL credentials
+- Verify MySQL service is running: `mysql -u root -p -e "SELECT 1;"`
 
-### Lỗi: "Port 3000 already in use"
-- Đổi PORT trong `.env` hoặc kill process đang dùng port 3000
+### Database connection error
+- Check if MySQL is running
+- Verify database `habits` exists: `mysql -u root -p -e "SHOW DATABASES;"`
+- Verify `.env` credentials match your MySQL setup
+- Run `npm run init-db` again to create tables
 
-### Lỗi: "relation does not exist"
-- Chạy lại migration: `npm run migrate`
+### Error: "Access denied for user 'root'@'localhost'"
+- Your MySQL password is incorrect
+- Update `DB_PASSWORD` in `.env`
+- Or reset MySQL password (search for "reset mysql password")
 
-### Reset database
-```bash
-# Trong PostgreSQL
-DROP DATABASE habits;
-CREATE DATABASE habits;
+### Port already in use
+- Frontend: `npm run dev -- --port 5175`
+- Backend: `PORT=3001 npm run dev`
+- MySQL: Change `DB_PORT` in `.env` and update connection
 
-# Chạy lại migration
-npm run migrate
+## Project Structure
+
+```
+habit-tracker/
+├── frontend/              React UI
+│   ├── src/
+│   │   ├── components/   (Header, Sidebar, HabitCard)
+│   │   ├── pages/        (HabitsList, AddHabit)
+│   │   ├── api.js        (API calls)
+│   │   ├── App.jsx       (Main app)
+│   │   └── App.css       (Styles)
+│   └── .env              (API URL config)
+│
+└── backend/              Node.js + Express API
+    ├── src/
+    │   ├── controllers/  (Business logic)
+    │   ├── routes/       (API endpoints)
+    │   ├── middleware/   (Error handling)
+    │   └── db/           (MySQL connection)
+    ├── scripts/
+    │   └── init-db.js    (Create tables)
+    └── .env              (MySQL config)
 ```
 
----
+## API Endpoints
 
-## Phân công công việc
+- `GET /api/health` - Health check
+- `GET /api/habits` - List all habits
+- `POST /api/habits` - Create habit
+- `DELETE /api/habits/:id` - Delete habit
+- `GET /api/logs` - List all logs
+- `POST /api/logs` - Create log entry
 
-### TV1 - Backend Engineer
-- ✅ Hoàn thiện API endpoints
-- ✅ Viết unit tests cho controllers
-- ✅ Xử lý validation và error handling
+## Database Schema
 
-### TV2 - Frontend Engineer
-- Xây dựng UI React
-- Tích hợp API
-- Responsive design
+### habits table
+- `id` - AUTO_INCREMENT PRIMARY KEY
+- `name` - VARCHAR(255) NOT NULL
+- `description` - TEXT
+- `created_at` - TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+- `updated_at` - TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE
 
-### TV3 - DevOps Engineer
-- Setup GitHub Actions
-- Viết CI/CD pipeline
-- Automated testing
+### logs table
+- `id` - AUTO_INCREMENT PRIMARY KEY
+- `habit_id` - INT NOT NULL (FOREIGN KEY to habits.id)
+- `date` - DATE NOT NULL
+- `created_at` - TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+- UNIQUE constraint on (habit_id, date)
 
-### TV4 - Infrastructure Engineer
-- Hoàn thiện Docker setup
-- Deploy lên Render/Railway
-- Monitoring
+## Quick MySQL Commands
 
-### TV5 - QA/SRE Engineer
-- Viết test cases
-- Tạo incident reports
-- Documentation
+```bash
+# Connect to MySQL
+mysql -u root -p
+
+# Show all databases
+SHOW DATABASES;
+
+# Select database
+USE habits;
+
+# Show all tables
+SHOW TABLES;
+
+# View habits
+SELECT * FROM habits;
+
+# View logs
+SELECT * FROM logs;
+
+# Reset database (delete all data)
+DROP DATABASE habits;
+CREATE DATABASE habits;
+```
+
