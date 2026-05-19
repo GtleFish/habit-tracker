@@ -14,9 +14,12 @@ const initDB = async () => {
       password: process.env.DB_PASSWORD,
     });
 
-    console.log("Creating database if not exists...");
+    console.log("Dropping old database if exists...");
+    await connection.query(`DROP DATABASE IF EXISTS ${process.env.DB_NAME}`);
+
+    console.log("Creating database...");
     await connection.query(
-      `CREATE DATABASE IF NOT EXISTS ${process.env.DB_NAME}`
+      `CREATE DATABASE ${process.env.DB_NAME}`
     );
 
     await connection.query(`USE ${process.env.DB_NAME}`);
@@ -37,6 +40,8 @@ const initDB = async () => {
         id INT AUTO_INCREMENT PRIMARY KEY,
         habit_id INT NOT NULL,
         date DATE NOT NULL,
+        start_time TIME NULL,
+        end_time TIME NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE KEY unique_habit_date (habit_id, date),
         FOREIGN KEY (habit_id) REFERENCES habits(id) ON DELETE CASCADE

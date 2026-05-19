@@ -4,7 +4,7 @@ export const getLogs = async (req, res, next) => {
   try {
     const connection = await pool.getConnection();
     const [logs] = await connection.query(
-      "SELECT * FROM logs ORDER BY date DESC"
+      "SELECT id, habit_id, DATE_FORMAT(date, '%Y-%m-%d') as date, start_time, end_time, created_at FROM logs ORDER BY date DESC"
     );
     connection.release();
     res.json(logs);
@@ -15,7 +15,7 @@ export const getLogs = async (req, res, next) => {
 
 export const createLog = async (req, res, next) => {
   try {
-    const { habitId, date } = req.body;
+    const { habitId, date, startTime, endTime } = req.body;
 
     if (!habitId || !date) {
       return res.status(400).json({
@@ -23,16 +23,27 @@ export const createLog = async (req, res, next) => {
       });
     }
 
+    if (startTime && endTime) {
+      const [start, end] = [startTime, endTime].map(t => t.split(':').map(Number));
+      const startMinutes = start[0] * 60 + start[1];
+      const endMinutes = end[0] * 60 + end[1];
+      if (endMinutes <= startMinutes) {
+        return res.status(400).json({
+          error: "End time must be after start time"
+        });
+      }
+    }
+
     const connection = await pool.getConnection();
 
     try {
       const [result] = await connection.query(
-        "INSERT INTO logs (habit_id, date) VALUES (?, ?)",
-        [habitId, date]
+        "INSERT INTO logs (habit_id, date, start_time, end_time) VALUES (?, ?, ?, ?)",
+        [habitId, date, startTime || null, endTime || null]
       );
 
       const [log] = await connection.query(
-        "SELECT * FROM logs WHERE id = ?",
+        "SELECT id, habit_id, DATE_FORMAT(date, '%Y-%m-%d') as date, start_time, end_time, created_at FROM logs WHERE id = ?",
         [result.insertId]
       );
 
