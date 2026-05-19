@@ -1,4 +1,11 @@
+import { useState } from 'react';
+import { TimeInputModal } from './TimeInputModal';
+import { formatTimeRange } from '../utils/timeConverter';
+
 export function HabitCard({ habit, logs, onDelete, onMarkComplete }) {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null);
+
   const getLast7Days = () => {
     const days = [];
     for (let i = 6; i >= 0; i--) {
@@ -14,6 +21,10 @@ export function HabitCard({ habit, logs, onDelete, onMarkComplete }) {
     if (log) return 'completed';
     if (new Date(dateStr) > new Date()) return 'future';
     return 'missed';
+  };
+
+  const getLogForDate = (dateStr) => {
+    return logs.find(l => l.date === dateStr && l.habit_id === habit.id);
   };
 
   const getStatusIcon = (status) => {
@@ -40,7 +51,26 @@ export function HabitCard({ habit, logs, onDelete, onMarkComplete }) {
 
   const handleDayClick = (date) => {
     const status = getStatusForDate(date);
-    onMarkComplete(habit.id, date);
+    if (status === 'future') return;
+    setSelectedDate(date);
+    setModalOpen(true);
+  };
+
+  const handleModalSave = (startTime, endTime) => {
+    onMarkComplete(habit.id, selectedDate, startTime, endTime);
+    setModalOpen(false);
+    setSelectedDate(null);
+  };
+
+  const handleModalCancel = () => {
+    setModalOpen(false);
+    setSelectedDate(null);
+  };
+
+  const getTooltip = (date) => {
+    const log = getLogForDate(date);
+    if (!log) return date;
+    return formatTimeRange(log.start_time, log.end_time);
   };
 
   const last7Days = getLast7Days();
@@ -67,7 +97,8 @@ export function HabitCard({ habit, logs, onDelete, onMarkComplete }) {
               <button
                 className={`day-status ${getStatusClass(status)}`}
                 onClick={() => handleDayClick(date)}
-                title={date}
+                title={getTooltip(date)}
+                disabled={status === 'future'}
               >
                 {getStatusIcon(status)}
               </button>
@@ -75,6 +106,13 @@ export function HabitCard({ habit, logs, onDelete, onMarkComplete }) {
           );
         })}
       </div>
+
+      <TimeInputModal
+        isOpen={modalOpen}
+        date={selectedDate}
+        onSave={handleModalSave}
+        onCancel={handleModalCancel}
+      />
     </div>
   );
 }

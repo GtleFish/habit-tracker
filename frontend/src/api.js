@@ -31,11 +31,11 @@ export const api = {
     return res.json();
   },
 
-  async createLog(habitId, date) {
+  async createLog(habitId, date, startTime, endTime) {
     const res = await fetch(`${API_URL}/api/logs`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ habitId, date }),
+      body: JSON.stringify({ habitId, date, startTime, endTime }),
     });
     if (!res.ok) throw new Error('Failed to create log');
     return res.json();

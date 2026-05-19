@@ -64,10 +64,10 @@ function App() {
     }
   }
 
-  const handleMarkComplete = async (habitId, date) => {
+  const handleMarkComplete = async (habitId, date, startTime, endTime) => {
     try {
       setError(null)
-      await api.createLog(habitId, date)
+      await api.createLog(habitId, date, startTime, endTime)
       await loadData()
     } catch (err) {
       setError('Failed to mark completion')
