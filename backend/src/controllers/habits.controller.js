@@ -1,53 +1,64 @@
 import pool from "../db/index.js";
 
-// GET /api/habits - Lấy tất cả habits
-export const getAllHabits = async (req, res, next) => {
+export const getHabits = async (req, res, next) => {
   try {
-    const result = await pool.query(
+    const connection = await pool.getConnection();
+    const [habits] = await connection.query(
       "SELECT * FROM habits ORDER BY created_at DESC"
     );
-    res.json(result.rows);
-  } catch (error) {
-    next(error);
+    connection.release();
+    res.json(habits);
+  } catch (err) {
+    next(err);
   }
 };
 
-// POST /api/habits - Tạo habit mới
 export const createHabit = async (req, res, next) => {
   try {
     const { name, description } = req.body;
 
-    if (!name || name.trim() === "") {
-      return res.status(400).json({ error: "Name is required" });
+    if (!name) {
+      return res.status(400).json({ error: "Habit name is required" });
     }
 
-    const result = await pool.query(
-      "INSERT INTO habits (name, description) VALUES ($1, $2) RETURNING *",
-      [name.trim(), description || null]
+    const connection = await pool.getConnection();
+    const [result] = await connection.query(
+      "INSERT INTO habits (name, description) VALUES (?, ?)",
+      [name, description || ""]
     );
 
-    res.status(201).json(result.rows[0]);
-  } catch (error) {
-    next(error);
+    const [habit] = await connection.query(
+      "SELECT * FROM habits WHERE id = ?",
+      [result.insertId]
+    );
+
+    connection.release();
+    res.status(201).json(habit[0]);
+  } catch (err) {
+    next(err);
   }
 };
 
-// DELETE /api/habits/:id - Xóa habit
 export const deleteHabit = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const connection = await pool.getConnection();
 
-    const result = await pool.query(
-      "DELETE FROM habits WHERE id = $1 RETURNING *",
+    await connection.query("DELETE FROM logs WHERE habit_id = ?", [id]);
+    const [result] = await connection.query(
+      "DELETE FROM habits WHERE id = ?",
       [id]
     );
 
-    if (result.rows.length === 0) {
+    connection.release();
+
+    if (result.affectedRows === 0) {
       return res.status(404).json({ error: "Habit not found" });
     }
 
-    res.json({ message: "Habit deleted successfully", habit: result.rows[0] });
-  } catch (error) {
-    next(error);
+    res.json({ message: "Habit deleted" });
+  } catch (err) {
+    next(err);
   }
 };
+
