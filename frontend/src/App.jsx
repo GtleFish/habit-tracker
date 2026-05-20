@@ -52,15 +52,13 @@ function App() {
   }
 
   const handleDeleteHabit = async (id) => {
-    if (window.confirm('Are you sure you want to delete this habit?')) {
-      try {
-        setError(null)
-        await api.deleteHabit(id)
-        await loadData()
-      } catch (err) {
-        setError('Failed to delete habit')
-        console.error(err)
-      }
+    try {
+      setError(null)
+      await api.deleteHabit(id)
+      await loadData()
+    } catch (err) {
+      setError('Failed to delete habit')
+      console.error(err)
     }
   }
 

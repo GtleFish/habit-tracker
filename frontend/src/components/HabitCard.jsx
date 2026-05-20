@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { TimeInputModal } from './TimeInputModal';
+import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { formatTimeRange } from '../utils/timeConverter';
 
 export function HabitCard({ habit, logs, onDelete, onMarkComplete }) {
   const [modalOpen, setModalOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedLog, setSelectedLog] = useState(null);
 
@@ -78,6 +80,19 @@ export function HabitCard({ habit, logs, onDelete, onMarkComplete }) {
     setSelectedLog(null);
   };
 
+  const handleDeleteClick = () => {
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    setDeleteConfirmOpen(false);
+    onDelete(habit.id);
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteConfirmOpen(false);
+  };
+
   const getTooltip = (date) => {
     const log = getLogForDate(date);
     if (!log) return date;
@@ -93,7 +108,7 @@ export function HabitCard({ habit, logs, onDelete, onMarkComplete }) {
           <h3>{habit.name}</h3>
           {habit.description && <p className="habit-description">{habit.description}</p>}
         </div>
-        <button className="btn-delete" onClick={() => onDelete(habit.id)}>
+        <button className="btn-delete" onClick={handleDeleteClick}>
           ✕
         </button>
       </div>
@@ -125,6 +140,12 @@ export function HabitCard({ habit, logs, onDelete, onMarkComplete }) {
         onSave={handleModalSave}
         onCancel={handleModalCancel}
         onDelete={handleLogDelete}
+      />
+      <DeleteConfirmModal
+        habitName={habit.name}
+        isOpen={deleteConfirmOpen}
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
       />
     </div>
   );
