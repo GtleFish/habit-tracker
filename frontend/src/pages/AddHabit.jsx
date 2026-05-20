@@ -1,54 +1,105 @@
 import { useState } from 'react';
 
 export function AddHabit({ onSubmit, isLoading, error }) {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [habits, setHabits] = useState([{ title: '', description: '' }]);
 
-  const handleSubmit = (e) => {
+  const handleAddField = () => {
+    setHabits([...habits, { title: '', description: '' }]);
+  };
+
+  const handleRemoveField = (index) => {
+    if (habits.length > 1) {
+      setHabits(habits.filter((_, i) => i !== index));
+    }
+  };
+
+  const handleChange = (index, field, value) => {
+    const updatedHabits = [...habits];
+    updatedHabits[index][field] = value;
+    setHabits(updatedHabits);
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (title.trim()) {
-      onSubmit(title, description);
-      setTitle('');
-      setDescription('');
+    const validHabits = habits.filter(h => h.title.trim());
+
+    if (validHabits.length > 0) {
+      for (const habit of validHabits) {
+        await onSubmit(habit.title, habit.description);
+      }
+      setHabits([{ title: '', description: '' }]);
     }
   };
 
   return (
     <div className="page">
-      <div className="form-container">
-        <h2>Create a new Habit</h2>
+      <div className="form-container-bulk">
+        <div className="form-header">
+          <h2>Create Habits</h2>
+          <p className="form-subtitle">Add one or multiple habits at once</p>
+        </div>
 
         {error && <div className="error-message">{error}</div>}
 
-        <form onSubmit={handleSubmit} className="habit-form">
-          <div className="form-group">
-            <input
-              type="text"
-              placeholder="Habit Title *"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="form-input"
-              disabled={isLoading}
-            />
+        <form onSubmit={handleSubmit} className="habit-form-bulk">
+          <div className="habits-list">
+            {habits.map((habit, index) => (
+              <div key={index} className="habit-input-group">
+                <div className="form-group">
+                  <input
+                    type="text"
+                    placeholder="Habit Title *"
+                    value={habit.title}
+                    onChange={(e) => handleChange(index, 'title', e.target.value)}
+                    className="form-input"
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <textarea
+                    placeholder="Description (optional)"
+                    value={habit.description}
+                    onChange={(e) => handleChange(index, 'description', e.target.value)}
+                    className="form-textarea"
+                    rows="3"
+                    disabled={isLoading}
+                  ></textarea>
+                </div>
+
+                {habits.length > 1 && (
+                  <button
+                    type="button"
+                    className="btn-remove-habit"
+                    onClick={() => handleRemoveField(index)}
+                    disabled={isLoading}
+                  >
+                    Remove
+                  </button>
+                )}
+
+                {index < habits.length - 1 && <div className="habit-divider"></div>}
+              </div>
+            ))}
           </div>
 
-          <div className="form-group">
-            <textarea
-              placeholder="Habit Description *"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="form-textarea"
-              rows="5"
+          <div className="form-actions">
+            <button
+              type="button"
+              className="btn-add-more"
+              onClick={handleAddField}
               disabled={isLoading}
-            ></textarea>
+            >
+              + Add Another Habit
+            </button>
+            <button type="submit" className="btn-submit" disabled={isLoading}>
+              {isLoading ? 'SUBMITTING...' : 'CREATE HABITS'}
+              <span className="arrow">{'\u003E'}</span>
+            </button>
           </div>
-
-          <button type="submit" className="btn-submit" disabled={isLoading}>
-            {isLoading ? 'SUBMITTING...' : 'SUBMIT'}
-            <span className="arrow">{'\u003E'}</span>
-          </button>
         </form>
       </div>
     </div>
   );
 }
+
