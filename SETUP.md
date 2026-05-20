@@ -16,7 +16,7 @@ docker exec habit-tracker-backend npm run migrate
 ```
 
 ### Bước 4: Kiểm tra
-- Backend: http://localhost:3000/api/health
+- Backend: http://localhost:5000/api/health
 - Database: localhost:5432
 
 ### Dừng hệ thống
@@ -52,7 +52,7 @@ npm install
 
 Tạo file `.env`:
 ```
-PORT=3000
+PORT=5000
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=postgres
@@ -85,36 +85,36 @@ npm run dev
 
 ### 1. Health Check
 ```bash
-curl http://localhost:3000/api/health
+curl http://localhost:5000/api/health
 ```
 
 ### 2. Tạo habit mới
 ```bash
-curl -X POST http://localhost:3000/api/habits \
+curl -X POST http://localhost:5000/api/habits \
   -H "Content-Type: application/json" \
   -d "{\"name\":\"Exercise\",\"description\":\"Daily workout\"}"
 ```
 
 ### 3. Lấy danh sách habits
 ```bash
-curl http://localhost:3000/api/habits
+curl http://localhost:5000/api/habits
 ```
 
 ### 4. Đánh dấu hoàn thành
 ```bash
-curl -X POST http://localhost:3000/api/logs \
+curl -X POST http://localhost:5000/api/logs \
   -H "Content-Type: application/json" \
   -d "{\"habit_id\":1,\"completed_date\":\"2024-01-15\",\"note\":\"Done!\"}"
 ```
 
 ### 5. Xem lịch sử
 ```bash
-curl http://localhost:3000/api/logs?habit_id=1
+curl http://localhost:5000/api/logs?habit_id=1
 ```
 
 ### 6. Xóa habit
 ```bash
-curl -X DELETE http://localhost:3000/api/habits/1
+curl -X DELETE http://localhost:5000/api/habits/1
 ```
 
 ---
@@ -125,8 +125,8 @@ curl -X DELETE http://localhost:3000/api/habits/1
 - Kiểm tra PostgreSQL đã chạy: `docker ps` hoặc `pg_isready`
 - Kiểm tra thông tin kết nối trong `.env`
 
-### Lỗi: "Port 3000 already in use"
-- Đổi PORT trong `.env` hoặc kill process đang dùng port 3000
+### Lỗi: "Port 5000 already in use"
+- Đổi PORT trong `.env` hoặc kill process đang dùng port 5000
 
 ### Lỗi: "relation does not exist"
 - Chạy lại migration: `npm run migrate`

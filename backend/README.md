@@ -21,7 +21,7 @@ copy .env.example .env
 
 3. Cấu hình database trong file `.env`:
 ```
-PORT=3000
+PORT=5000
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=postgres
@@ -51,7 +51,7 @@ npm run dev
 npm start
 ```
 
-Server sẽ chạy tại `http://localhost:3000`
+Server sẽ chạy tại `http://localhost:5001`
 
 ## API Endpoints
 
@@ -111,5 +111,5 @@ docker build -t habit-tracker-backend .
 
 Run container:
 ```bash
-docker run -p 3000:3000 --env-file .env habit-tracker-backend
+docker run -p 5001:5001 --env-file .env habit-tracker-backend
 ```
