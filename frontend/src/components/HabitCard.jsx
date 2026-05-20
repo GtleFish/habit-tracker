@@ -1,11 +1,5 @@
-import { useState } from 'react';
-import { TimeInputModal } from './TimeInputModal';
-import { formatTimeRange } from '../utils/timeConverter';
-
 export function HabitCard({ habit, logs, onDelete, onMarkComplete }) {
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(null);
-
+  // Lấy 7 ngày gần nhất
   const getLast7Days = () => {
     const days = [];
     for (let i = 6; i >= 0; i--) {
@@ -16,103 +10,75 @@ export function HabitCard({ habit, logs, onDelete, onMarkComplete }) {
     return days;
   };
 
-  const getStatusForDate = (dateStr) => {
-    const log = logs.find(l => l.date === dateStr && l.habit_id === habit.id);
-    if (log) return 'completed';
-    if (new Date(dateStr) > new Date()) return 'future';
-    return 'missed';
+  const isCompleted = (dateStr) => {
+    return logs.some(
+      (l) => l.completed_date?.split('T')[0] === dateStr && l.habit_id === habit.id
+    );
   };
 
-  const getLogForDate = (dateStr) => {
-    return logs.find(l => l.date === dateStr && l.habit_id === habit.id);
-  };
+  const isFuture = (dateStr) => new Date(dateStr) > new Date();
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'completed':
-        return '✓';
-      case 'missed':
-        return '✕';
-      default:
-        return '⊘';
-    }
-  };
-
-  const getStatusClass = (status) => {
-    switch (status) {
-      case 'completed':
-        return 'day-completed';
-      case 'missed':
-        return 'day-missed';
-      default:
-        return 'day-future';
-    }
+  const formatDay = (dateStr) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('vi-VN', { weekday: 'short', day: 'numeric' });
   };
 
   const handleDayClick = (date) => {
-    const status = getStatusForDate(date);
-    if (status === 'future') return;
-    setSelectedDate(date);
-    setModalOpen(true);
-  };
-
-  const handleModalSave = (startTime, endTime) => {
-    onMarkComplete(habit.id, selectedDate, startTime, endTime);
-    setModalOpen(false);
-    setSelectedDate(null);
-  };
-
-  const handleModalCancel = () => {
-    setModalOpen(false);
-    setSelectedDate(null);
-  };
-
-  const getTooltip = (date) => {
-    const log = getLogForDate(date);
-    if (!log) return date;
-    return formatTimeRange(log.start_time, log.end_time);
+    if (!isFuture(date)) {
+      onMarkComplete(habit.id, date);
+    }
   };
 
   const last7Days = getLast7Days();
+  const completedCount = last7Days.filter((d) => isCompleted(d)).length;
 
   return (
     <div className="habit-card">
       <div className="habit-card-header">
-        <div>
-          <h3>{habit.name}</h3>
-          {habit.description && <p className="habit-description">{habit.description}</p>}
+        <div className="habit-info">
+          <h3 className="habit-name">{habit.name}</h3>
+          {habit.description && (
+            <p className="habit-description">{habit.description}</p>
+          )}
+          <span className="habit-streak">
+            ✅ {completedCount}/7 ngày tuần này
+          </span>
         </div>
-        <button className="btn-delete" onClick={() => onDelete(habit.id)}>
-          ✕
+        <button
+          className="btn-delete"
+          onClick={() => onDelete(habit.id)}
+          title="Xóa habit"
+          aria-label={`Xóa habit ${habit.name}`}
+        >
+          🗑️
         </button>
       </div>
 
-      <div className="habit-tracker">
-        {last7Days.map((date, idx) => {
-          const dayNum = idx + 1;
-          const status = getStatusForDate(date);
+      <div className="habit-days">
+        {last7Days.map((date) => {
+          const completed = isCompleted(date);
+          const future = isFuture(date);
+          let statusClass = 'day-missed';
+          if (completed) statusClass = 'day-completed';
+          else if (future) statusClass = 'day-future';
+
           return (
-            <div key={date} className="day-column">
-              <div className="day-label">Day {dayNum}</div>
-              <button
-                className={`day-status ${getStatusClass(status)}`}
-                onClick={() => handleDayClick(date)}
-                title={getTooltip(date)}
-                disabled={status === 'future'}
-              >
-                {getStatusIcon(status)}
-              </button>
-            </div>
+            <button
+              key={date}
+              className={`day-btn ${statusClass}`}
+              onClick={() => handleDayClick(date)}
+              disabled={future}
+              title={date}
+              aria-label={`${date}: ${completed ? 'Đã hoàn thành' : future ? 'Chưa đến' : 'Chưa hoàn thành'}`}
+            >
+              <span className="day-label">{formatDay(date)}</span>
+              <span className="day-icon">
+                {completed ? '✓' : future ? '·' : '✕'}
+              </span>
+            </button>
           );
         })}
       </div>
-
-      <TimeInputModal
-        isOpen={modalOpen}
-        date={selectedDate}
-        onSave={handleModalSave}
-        onCancel={handleModalCancel}
-      />
     </div>
   );
 }
