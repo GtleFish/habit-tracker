@@ -1,163 +1,141 @@
-# Hướng Dẫn Triển Khai & Sử Dụng (Deployment & Usage Guide)
+# Hướng Dẫn Triển Khai & Xử Lý Sự Cố (Deployment & Troubleshooting Guide)
 
-Tài liệu này hướng dẫn chi tiết cách cấu hình tự động triển khai (Auto-Deploy) từ nhánh `develop` lên **Render** (Backend) và **Vercel** (Frontend), cách vận hành ứng dụng trên Local (có/không dùng Docker) và quản lý môi trường.
-
----
-
-## 1. Chuyển Nhánh Deploy Tự Động Sang `develop`
-
-Để tránh việc phải chuyển code hoặc push thủ công từ `develop` sang `feature/infrastructure`, hãy thực hiện các bước cấu hình sau trên Dashboard của Render và Vercel:
-
-### 🔹 Cấu Hình Trên Render (Backend)
-Render hỗ trợ thay đổi nhánh deploy trực tiếp trên giao diện quản trị mà không làm mất cấu hình biến môi trường:
-1. Truy cập vào [Render Dashboard](https://dashboard.render.com/).
-2. Chọn Web Service backend của bạn (`habit-tracker-backend` hoặc tên tương ứng).
-3. Đi đến mục **Settings** ở thanh menu bên trái.
-4. Tìm phần **Branch** (mặc định đang là `feature/infrastructure`).
-5. Đổi giá trị thành `develop`.
-6. Cuộn xuống và nhấn **Save Changes**.
-7. *Kể từ bây giờ, bất kỳ khi nào bạn push code mới lên nhánh `develop` trên GitHub, Render sẽ tự động build và deploy phiên bản mới nhất.*
-
-### 🔹 Cấu Hình Trên Vercel (Frontend)
-Nếu bạn kết nối trực tiếp GitHub Repo với Vercel để Auto-Deploy:
-1. Truy cập [Vercel Dashboard](https://vercel.com/).
-2. Chọn dự án Frontend (`habit-tracker-frontend`).
-3. Đi tới tab **Settings** -> **Git**.
-4. Trong phần **Production Branch**, đổi nhánh chính từ `main` (hoặc nhánh hiện tại) thành `develop`.
-5. Nhấn **Save**.
-6. *Mỗi khi có code mới được merge hoặc push vào `develop`, Vercel sẽ tự động build bản Production.*
+Tài liệu này hướng dẫn chi tiết cách cấu hình tự động triển khai (Auto-Deploy) từ nhánh **`develop`** lên **Render** (Backend) và **Vercel** (Frontend), cách vận hành ứng dụng trên Local (có/không dùng Docker) và các bước xử lý sự cố chi tiết khi triển khai gặp lỗi.
 
 ---
 
-## 2. Quy Trình Deploy Thủ Công (Nếu Cần)
+## 1. Cấu Hình Deploy Nhánh `develop`
 
-### 🚀 Deploy Backend (Nếu không dùng Auto-Deploy)
-Nếu bạn muốn deploy thủ công qua Git lên một nhánh deploy phụ (như `feature/infrastructure`):
-```bash
-# Push từ nhánh develop local lên nhánh deploy trên github
-git push origin develop:feature/infrastructure --force
-```
+Để đồng bộ hóa quy trình, tất cả các môi trường (Staging/Production) sẽ được phân phát trực tiếp từ nhánh phát triển chính **`develop`**.
 
-### 🚀 Deploy Frontend Qua Vercel CLI
-Nếu bạn muốn trực tiếp deploy từ máy cá nhân lên Vercel production:
+### 🔹 1.1. Cấu Hình Trên Render (Backend API)
+Để Render tự động biên dịch và triển khai mỗi khi bạn push code mới lên nhánh `develop` trên GitHub:
+1. Truy cập [Render Dashboard](https://dashboard.render.com/).
+2. Chọn Web Service của bạn (ví dụ: `habit-tracker-backend`).
+3. Điều hướng tới mục **Settings** ở menu bên trái.
+4. Tìm trường **Branch** và đổi giá trị thành **`develop`**.
+5. Cuộn xuống dưới cùng và nhấn **Save Changes**.
+6. *Từ bây giờ, Render sẽ tự động deploy mỗi khi nhánh `develop` trên GitHub được cập nhật.*
+
+### 🔹 1.2. Cấu Hinh Trên Vercel (Frontend UI)
+Tùy thuộc vào việc dự án Vercel của bạn đã được kết nối với GitHub hay chưa, hãy chọn một trong hai phương án sau:
+
+#### 👉 Trường Hợp A: Vercel ĐÃ kết nối với GitHub (Auto-Deploy)
+Nếu Vercel của bạn được liên kết trực tiếp với GitHub Repository:
+1. Truy cập [Vercel Dashboard](https://vercel.com/) -> Chọn dự án `habit-tracker-frontend`.
+2. Đi tới **Settings** -> **Git**.
+3. Tại phần **Production Branch**, thay đổi nhánh mặc định (thường là `main` hoặc `master`) thành **`develop`** và lưu lại.
+4. *Lưu ý quan trọng:* Trong **Settings** -> **General** -> mục **Root Directory**, bạn bắt buộc phải nhập là **`frontend`** (vì đây là cấu trúc monorepo chứa cả backend và frontend).
+
+#### 👉 Trường Hợp B: Vercel CHƯA kết nối với GitHub (Deploy Thủ Công qua CLI)
+Nếu phần Git của bạn hiển thị thông báo *"This Project is not connected to a Git repository"*:
+Bạn không cần đổi cài đặt trên web, thay vào đó bạn sẽ deploy trực tiếp từ local:
 ```bash
 cd frontend
-# Đăng nhập (nếu chưa)
-vercel login
-
-# Deploy trực tiếp lên production
+# Chạy lệnh build và deploy trực tiếp code của nhánh hiện tại lên Vercel
 vercel --prod --yes
 ```
 
 ---
 
-## 3. Kiến Trúc Môi Trường & Biến Môi Trường (Environment Variables)
+## 2. Các Biến Môi Trường Quan Trọng
 
 ### 🗄️ Backend (Render - PostgreSQL)
-Khi deploy lên Render, hãy đảm bảo các biến môi trường sau đã được cấu hình trong **Settings -> Environment Variables**:
+Cấu hình trong mục **Settings -> Environment Variables** trên Render:
 
-| Tên Biến | Giá trị Khuyến nghị / Mô tả |
+| Tên Biến | Giá trị / Ý nghĩa |
 | :--- | :--- |
-| `PORT` | `3000` (Render sẽ tự động mapping port nếu để trống) |
-| `DB_HOST` | Địa chỉ Host của PostgreSQL (Lấy từ Render PostgreSQL Internal Database URL) |
+| `PORT` | `3000` (hoặc để trống để Render tự cấu hình) |
+| `DB_HOST` | Địa chỉ host của database PostgreSQL trên Render |
 | `DB_PORT` | `5432` |
-| `DB_USER` | Tên user database |
+| `DB_USER` | Tên đăng nhập database |
 | `DB_PASSWORD` | Mật khẩu database |
 | `DB_NAME` | Tên database |
-| `NODE_ENV` | `production` (khi chạy prod để kích hoạt SSL kết nối DB bảo mật) |
+| `NODE_ENV` | `production` (bắt buộc để kích hoạt chế độ SSL bảo mật kết nối với PostgreSQL) |
 
 > [!IMPORTANT]
-> Lệnh khởi động (Start Command) trên Render cần cấu hình là:
+> **Start Command** trên Render phải được thiết lập chính xác là:
 > ```bash
 > npm run migrate && npm start
 > ```
-> Điều này đảm bảo cơ sở dữ liệu luôn được cập nhật tự động bằng tệp SQL Migration mới nhất mỗi khi service khởi chạy.
+> Lệnh này đảm bảo Render tự động chạy các tệp migration tạo bảng dữ liệu mới nhất trước khi bật API lên.
 
 ### 💻 Frontend (Vercel)
 Cấu hình trong **Settings -> Environment Variables** trên Vercel:
 
-| Tên Biến | Giá trị / Mô tả |
+| Tên Biến | Giá trị / Ý nghĩa |
 | :--- | :--- |
-| `VITE_API_URL` | Đường dẫn gốc của Backend API (Ví dụ: `https://habit-tracker-r2tw.onrender.com`) |
+| `VITE_API_URL` | Địa chỉ URL Backend API đã deploy thành công trên Render (ví dụ: `https://habit-tracker-r2tw.onrender.com`) |
 
-> [!WARNING]
-> Không được hardcode địa chỉ `http://localhost:3000` trong mã nguồn frontend. Luôn sử dụng `import.meta.env.VITE_API_URL` để gọi API.
+---
+
+## 3. Hướng Dẫn Xử Lý Sự Cố Khi Deploy Thất Bại (Troubleshooting)
+
+Dưới đây là tổng hợp các trường hợp lỗi thường gặp và cách xử lý nhanh chóng:
+
+### ❌ Lỗi 1: Trang Vercel chỉ hiển thị màn hình mặc định của Vite (Boilerplate)
+* **Triệu chứng:** Khi mở link frontend, bạn chỉ thấy màn hình giới thiệu của Vite "Get started... edit src/App.jsx" thay vì giao diện theo dõi thói quen.
+* **Nguyên nhân:** Thư mục chạy deploy bị cấu hình sai, Vercel đang biên dịch file của thư mục gốc của Git chứa mã nguồn mẫu thay vì mã nguồn thực tế nằm trong `/frontend`.
+* **Cách khắc phục:**
+  1. Nếu deploy qua Git: Truy cập **Vercel Dashboard** -> **Settings** -> **General** -> mục **Root Directory**, sửa thành **`frontend`** và thực hiện Redeploy.
+  2. Nếu deploy qua CLI: Đảm bảo bạn đã dùng lệnh `cd frontend` trước khi chạy `vercel --prod --yes`.
+
+---
+
+### ❌ Lỗi 2: Frontend load thành công nhưng không lấy được dữ liệu / Lỗi "Không thể kết nối backend"
+* **Triệu chứng:** Giao diện Habit Tracker hiển thị nhưng danh sách thói quen trống trơn và có dòng thông báo lỗi kết nối.
+* **Nguyên nhân 1 (Thời gian chờ):** Bạn sử dụng Render gói Free. Nếu không có lượt truy cập trong 15 phút, server API sẽ tự động ngủ (Sleep). Lần truy cập đầu tiên có thể mất từ 30–50 giây để server "thức dậy".
+  * *Giải pháp:* Hãy kiên nhẫn đợi 1 phút và F5 tải lại trang.
+* **Nguyên nhân 2 (Thiếu biến môi trường):** Vercel chưa nhận diện được địa chỉ API của Backend do thiếu cấu hình biến môi trường.
+  * *Giải pháp:* Truy cập **Vercel Settings** -> **Environment Variables**, tạo biến `VITE_API_URL` với giá trị là đường link backend Render của bạn. Lưu ý **không được chứa dấu gạch chéo `/` ở cuối** (Ví dụ: dùng `https://api.com` thay vì `https://api.com/`). Sau đó, vào tab **Deployments** bấm vào dấu 3 chấm của bản deploy mới nhất -> chọn **Redeploy** để áp dụng biến môi trường mới.
+
+---
+
+### ❌ Lỗi 3: Render báo lỗi Build Failed hoặc Deploy Failed
+* **Triệu chứng:** Bản build của backend trên Render bị đỏ (Failed).
+* **Nguyên nhân 1 (Sai Start Command):** Render cố gắng chạy tệp `.env` nhưng môi trường production không có file vật lý này.
+  * *Giải pháp:* Kiểm tra tệp `package.json` của backend. Đảm bảo script `"start"` là `"node src/server.js"` (không dùng `--env-file .env` vì trên Render các biến môi trường được truyền trực tiếp qua hệ thống).
+* **Nguyên nhân 2 (Lỗi kết nối PostgreSQL):** Script migrate chạy bị lỗi do cấu hình DB sai.
+  * *Giải pháp:* Kiểm tra lại tất cả các biến môi trường của Database trên Render xem có khớp 100% với thông tin bên database hay chưa. Đảm bảo biến `NODE_ENV` đã được set là `production` để driver `pg` sử dụng kết nối SSL an toàn.
+
+---
+
+### ❌ Lỗi 4: Git báo lỗi "Updates were rejected... non-fast-forward" khi push code
+* **Triệu chứng:** Khi bạn gõ lệnh `git push`, Git từ chối nhận code mới và báo lỗi xung đột hoặc phân nhánh.
+* **Nguyên nhân:** Nhánh trên máy local của bạn và nhánh trên GitHub đang bị lệch lịch sử commit (ví dụ: ai đó đã cập nhật trực tiếp trên GitHub trước).
+* **Cách khắc phục:**
+  1. Đồng bộ lại lịch sử code local của bạn với GitHub bằng cách chạy:
+     ```bash
+     git fetch origin develop
+     git reset --hard origin/develop
+     ```
+     *(Cảnh báo: Lệnh này sẽ ghi đè toàn bộ code local của bạn theo bản mới nhất trên GitHub, hãy chắc chắn bạn đã sao lưu các file tự chỉnh sửa trước đó).*
+  2. Sau khi đồng bộ, bạn có thể thực hiện chỉnh sửa và push một cách an toàn.
 
 ---
 
 ## 4. Hướng Dẫn Chạy Dưới Local (Local Development)
 
-### 🐳 Cách 1: Sử Dụng Docker (Nhanh & Tiện nhất)
-Docker tự động thiết lập Node.js và PostgreSQL cục bộ mà không cần cài đặt thủ công.
-
-1. Khởi động Docker Desktop.
-2. Tạo file `.env` ở thư mục gốc:
-   ```bash
-   cp .env.example .env
-   ```
-3. Khởi động các container:
-   ```bash
-   docker-compose up -d --build
-   ```
-4. Chạy migration để tạo bảng cơ sở dữ liệu:
-   ```bash
-   docker exec -it habit-tracker-backend npm run migrate
-   ```
-5. Truy cập ứng dụng:
-   - Frontend: `http://localhost:5173`
-   - Backend API: `http://localhost:3000/api/health`
-
----
+### 🐳 Cách 1: Sử Dụng Docker (Khuyên dùng)
+1. Tạo file `.env` ở thư mục gốc: `cp .env.example .env`
+2. Khởi chạy hệ thống: `docker-compose up -d --build`
+3. Tạo cơ sở dữ liệu: `docker exec -it habit-tracker-backend npm run migrate`
+4. Mở trình duyệt: `http://localhost:5173`
 
 ### 💻 Cách 2: Chạy Thủ Công (Không dùng Docker)
-
-#### Bước 1: Setup Cơ Sở Dữ Liệu PostgreSQL
-- Đảm bảo đã cài đặt PostgreSQL trên máy.
-- Tạo một database mới tên là `habits`.
-
-#### Bước 2: Setup & Chạy Backend
-```bash
-cd backend
-npm install
-
-# Tạo và cấu hình file .env
-cp .env.example .env
-# Chỉnh sửa file .env với thông tin kết nối DB postgres cục bộ của bạn
-
-# Chạy migration tạo bảng
-npm run migrate
-
-# Chạy server ở chế độ Development (tự động reload khi sửa code)
-npm run dev
-```
-
-#### Bước 3: Setup & Chạy Frontend
-```bash
-cd ../frontend
-npm install
-
-# Tạo file .env và trỏ về local backend
-echo "VITE_API_URL=http://localhost:5000" > .env
-
-# Chạy frontend dev server
-npm run dev
-```
-Truy cập giao diện tại: `http://localhost:5173`
-
----
-
-## 5. Quy Trình Phát Triển & Kiểm Thử Tự Động (CI/CD Pipeline)
-
-Dự án tích hợp sẵn **GitHub Actions** (`.github/workflows/ci.yml`). Bất kỳ khi nào có Pull Request hoặc Push lên nhánh `develop` hoặc `main`, pipeline sẽ tự động thực hiện:
-
-1. **Backend — Lint & Test**:
-   - Khởi động một container PostgreSQL ảo.
-   - Cài đặt thư viện backend.
-   - Chạy toàn bộ các bài kiểm thử tự động (`npm test`) để phát hiện lỗi logic.
-2. **Frontend — Lint & Build**:
-   - Cài đặt thư viện frontend.
-   - Chạy ESLint kiểm tra định dạng và tiêu chuẩn viết mã nguồn.
-   - Biên dịch thử nghiệm (`npm run build`) để kiểm tra lỗi cú pháp trước khi deploy thực tế.
-
-> [!TIP]
-> Hãy luôn chạy `npm run lint` ở frontend và `npm test` ở backend dưới local trước khi push code lên GitHub để đảm bảo pipeline CI/CD luôn có trạng thái xanh (Passed)!
+* **Backend:**
+  ```bash
+  cd backend
+  npm install
+  cp .env.example .env  # Điền thông tin PostgreSQL local của bạn vào đây
+  npm run migrate       # Tạo bảng
+  npm run dev           # Chạy server (tự động reload)
+  ```
+* **Frontend:**
+  ```bash
+  cd frontend
+  npm install
+  echo "VITE_API_URL=http://localhost:5000" > .env
+  npm run dev
+  ```
+  Truy cập giao diện tại: `http://localhost:5173`
