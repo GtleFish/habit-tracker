@@ -10,4 +10,9 @@ const pool = new Pool({
   database: process.env.DB_NAME,
 });
 
+// Handle pool errors
+pool.on("error", (err) => {
+  console.error("Unexpected error on idle client", err);
+});
+
 export default pool;
