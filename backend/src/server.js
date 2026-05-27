@@ -1,12 +1,12 @@
 import dotenv from "dotenv";
 import app from "../app.js";
 import pool from "./db/index.js";
-
+//
 // Load environment variables
 dotenv.config();
 
 const PORT = process.env.PORT || 5000;
-
+//
 // Test database connection before starting server
 async function startServer() {
   try {

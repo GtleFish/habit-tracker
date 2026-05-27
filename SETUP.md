@@ -14,7 +14,7 @@ docker-compose up -d
 ```bash
 docker exec habit-tracker-backend npm run migrate
 ```
-
+#
 ### Bước 4: Kiểm tra
 - Backend: http://localhost:5000/api/health
 - Database: localhost:5432

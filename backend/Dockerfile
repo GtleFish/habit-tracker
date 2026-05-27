@@ -22,7 +22,7 @@ COPY . .
 
 # Make entrypoint script executable
 RUN chmod +x docker-entrypoint.sh
-
+#
 # Expose port
 EXPOSE 5000
 
