@@ -1,9 +1,8 @@
-# Hướng dẫn Setup Habit Tracker
+# Habit Tracker - Setup Guide (MySQL)
 
-## Phương án 1: Chạy với Docker (Khuyến nghị)
+## Prerequisites
 
-### Bước 1: Cài đặt Docker
-- Tải Docker Desktop: https://www.docker.com/products/docker-desktop
+You need to have **MySQL** installed and running on your system.
 
 ### Bước 2: Chạy toàn bộ hệ thống
 ```bash
@@ -19,71 +18,70 @@ docker exec habit-tracker-backend npm run migrate
 - Backend: http://localhost:5000/api/health
 - Database: localhost:5432
 
-### Dừng hệ thống
+#### macOS
 ```bash
-docker-compose down
+brew install mysql
+brew services start mysql
+mysql_secure_installation  # (optional setup)
 ```
 
-### Xem logs
+#### Linux (Ubuntu/Debian)
 ```bash
-docker-compose logs -f backend
+sudo apt-get install mysql-server
+sudo systemctl start mysql
 ```
 
----
+## Setup Steps
 
-## Phương án 2: Chạy Local (Development)
+### 1. Create Database
+Open MySQL and create the `habits` database:
 
-### Bước 1: Cài đặt PostgreSQL
-- Windows: https://www.postgresql.org/download/windows/
-- Mac: `brew install postgresql`
-- Linux: `sudo apt install postgresql`
+```bash
+mysql -u root -p
+```
 
-### Bước 2: Tạo database
+Then in the MySQL prompt:
 ```sql
 CREATE DATABASE habits;
+exit
 ```
 
-### Bước 3: Setup Backend
-
+Or run directly:
 ```bash
-cd backend
-npm install
+mysql -u root -p -e "CREATE DATABASE habits;"
 ```
 
 Tạo file `.env`:
 ```
 PORT=5000
 DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=your_password
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=your_password_here
 DB_NAME=habits
-NODE_ENV=development
 ```
 
-Chạy migration:
-```bash
-npm run migrate
-```
+**Note:** 
+- If you didn't set a password during MySQL installation, leave `DB_PASSWORD` empty
+- Default MySQL port is `3306`
+- Default user is `root`
 
-Chạy server:
+### 3. Install Dependencies
 ```bash
-npm run dev
-```
-
-### Bước 4: Setup Frontend
-
-```bash
-cd frontend
+cd backend
 npm install
-npm run dev
 ```
 
----
+### 4. Initialize Database Tables
+```bash
+npm run init-db
+```
 
-## Test API với curl hoặc Postman
+You should see: `✓ Database tables created successfully`
 
-### 1. Health Check
+### 5. Start the Servers
+
+**Terminal 1 - Backend:**
 ```bash
 curl http://localhost:5000/api/health
 ```
@@ -95,7 +93,7 @@ curl -X POST http://localhost:5000/api/habits \
   -d "{\"name\":\"Exercise\",\"description\":\"Daily workout\"}"
 ```
 
-### 3. Lấy danh sách habits
+**Terminal 2 - Frontend:**
 ```bash
 curl http://localhost:5000/api/habits
 ```
@@ -117,7 +115,15 @@ curl http://localhost:5000/api/logs?habit_id=1
 curl -X DELETE http://localhost:5000/api/habits/1
 ```
 
----
+1. Click **"Add Habit"** in the sidebar
+2. Enter habit title and description
+3. Click **SUBMIT**
+4. Your habit appears on the **"My Habits"** page
+5. Click the day buttons to mark completion:
+   - ✓ (Green) = Completed
+   - ✕ (Red) = Missed
+   - ⊘ (Gray) = No data
+6. Click the **✕** button on a habit card to delete it
 
 ## Troubleshooting
 
@@ -131,41 +137,27 @@ curl -X DELETE http://localhost:5000/api/habits/1
 ### Lỗi: "relation does not exist"
 - Chạy lại migration: `npm run migrate`
 
-### Reset database
 ```bash
-# Trong PostgreSQL
+# Connect to MySQL
+mysql -u root -p
+
+# Show all databases
+SHOW DATABASES;
+
+# Select database
+USE habits;
+
+# Show all tables
+SHOW TABLES;
+
+# View habits
+SELECT * FROM habits;
+
+# View logs
+SELECT * FROM logs;
+
+# Reset database (delete all data)
 DROP DATABASE habits;
 CREATE DATABASE habits;
-
-# Chạy lại migration
-npm run migrate
 ```
 
----
-
-## Phân công công việc
-
-### TV1 - Backend Engineer
-- ✅ Hoàn thiện API endpoints
-- ✅ Viết unit tests cho controllers
-- ✅ Xử lý validation và error handling
-
-### TV2 - Frontend Engineer
-- Xây dựng UI React
-- Tích hợp API
-- Responsive design
-
-### TV3 - DevOps Engineer
-- Setup GitHub Actions
-- Viết CI/CD pipeline
-- Automated testing
-
-### TV4 - Infrastructure Engineer
-- Hoàn thiện Docker setup
-- Deploy lên Render/Railway
-- Monitoring
-
-### TV5 - QA/SRE Engineer
-- Viết test cases
-- Tạo incident reports
-- Documentation

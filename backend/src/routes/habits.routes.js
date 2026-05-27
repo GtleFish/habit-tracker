@@ -1,13 +1,9 @@
 import express from "express";
-import {
-  getAllHabits,
-  createHabit,
-  deleteHabit,
-} from "../controllers/habits.controller.js";
+import { getHabits, createHabit, deleteHabit } from "../controllers/habits.controller.js";
 
 const router = express.Router();
 
-router.get("/", getAllHabits);
+router.get("/", getHabits);
 router.post("/", createHabit);
 router.delete("/:id", deleteHabit);
 
