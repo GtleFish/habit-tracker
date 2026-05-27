@@ -4,8 +4,16 @@
 
 You need to have **MySQL** installed and running on your system.
 
-### Install MySQL
+### Bước 2: Chạy toàn bộ hệ thống
+```bash
+docker-compose up -d
+```
 
+### Bước 3: Chạy migration
+```bash
+docker exec habit-tracker-backend npm run migrate
+```
+#
 ### Bước 4: Kiểm tra
 - Backend: http://localhost:5000/api/health
 - Database: localhost:5432
