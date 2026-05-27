@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5001';
 
 export const api = {
   async getHabits() {
@@ -34,7 +34,7 @@ export const api = {
     return res.json();
   },
 
-  async createLog(habitId, completedDate, note = '') {
+  async createLog(habitId, completedDate, note = '', startTime = '', endTime = '') {
     const res = await fetch(`${API_URL}/api/logs`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -42,9 +42,19 @@ export const api = {
         habit_id: habitId,
         completed_date: completedDate,
         note,
+        start_time: startTime || null,
+        end_time: endTime || null,
       }),
     });
     if (!res.ok) throw new Error('Failed to create log');
+    return res.json();
+  },
+
+  async deleteLog(habitId, completedDate) {
+    const res = await fetch(`${API_URL}/api/logs?habit_id=${habitId}&completed_date=${completedDate}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) throw new Error('Failed to delete log');
     return res.json();
   },
 

@@ -7,7 +7,8 @@ export function Header({ apiStatus }) {
       </div>
       <div className="header-right">
         <span className={`api-status ${apiStatus === 'ok' ? 'status-ok' : 'status-error'}`}>
-          {apiStatus === 'ok' ? '🟢 API Online' : '🔴 API Offline'}
+          <span>{apiStatus === 'ok' ? '●' : '●'}</span>
+          {apiStatus === 'ok' ? 'API Online' : 'API Offline'}
         </span>
       </div>
     </header>

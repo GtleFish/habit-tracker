@@ -23,6 +23,9 @@ export function Sidebar({ currentPage, onNavigate }) {
           </button>
         ))}
       </nav>
+      <div className="sidebar-footer">
+        Build better habits ✨
+      </div>
     </aside>
   );
 }

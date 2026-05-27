@@ -64,7 +64,6 @@ function App() {
   }
 
   const handleDeleteHabit = async (id) => {
-    if (!window.confirm('Bạn có chắc muốn xóa habit này không?')) return
     try {
       setError(null)
       await api.deleteHabit(id)
@@ -75,13 +74,24 @@ function App() {
     }
   }
 
-  const handleMarkComplete = async (habitId, date) => {
+  const handleMarkComplete = async (habitId, date, startTime = '', endTime = '') => {
     try {
       setError(null)
-      await api.createLog(habitId, date)
+      await api.createLog(habitId, date, '', startTime, endTime)
       await loadData()
     } catch (err) {
       setError('Không thể cập nhật. Thử lại sau.')
+      console.error(err)
+    }
+  }
+
+  const handleDeleteLog = async (habitId, date) => {
+    try {
+      setError(null)
+      await api.deleteLog(habitId, date)
+      await loadData()
+    } catch (err) {
+      setError('Không thể xóa. Thử lại sau.')
       console.error(err)
     }
   }
@@ -98,6 +108,7 @@ function App() {
               logs={logs}
               onDelete={handleDeleteHabit}
               onMarkComplete={handleMarkComplete}
+              onDeleteLog={handleDeleteLog}
               isLoading={loading}
               error={error}
             />
