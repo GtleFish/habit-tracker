@@ -5,6 +5,7 @@ import { Sidebar } from './components/Sidebar'
 import { Header } from './components/Header'
 import { HabitsList } from './pages/HabitsList'
 import { AddHabit } from './pages/AddHabit'
+import { History } from './pages/History'
 
 function App() {
   const [currentPage, setCurrentPage] = useState('habits')
@@ -13,10 +14,21 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [submitLoading, setSubmitLoading] = useState(false)
+  const [apiStatus, setApiStatus] = useState('checking')
 
   useEffect(() => {
+    checkHealth()
     loadData()
   }, [])
+
+  const checkHealth = async () => {
+    try {
+      await api.checkHealth()
+      setApiStatus('ok')
+    } catch {
+      setApiStatus('error')
+    }
+  }
 
   const loadData = async () => {
     try {
@@ -29,22 +41,22 @@ function App() {
       setHabits(habitsData || [])
       setLogs(logsData || [])
     } catch (err) {
-      setError('Failed to load data. Make sure backend is running.')
+      setError('Không thể kết nối backend. Kiểm tra server đang chạy chưa.')
       console.error(err)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleAddHabit = async (title, description) => {
+  const handleAddHabit = async (name, description) => {
     try {
       setSubmitLoading(true)
       setError(null)
-      await api.createHabit(title, description)
+      await api.createHabit(name, description)
       await loadData()
       setCurrentPage('habits')
     } catch (err) {
-      setError('Failed to create habit')
+      setError('Không thể tạo habit. Thử lại sau.')
       console.error(err)
     } finally {
       setSubmitLoading(false)
@@ -57,50 +69,66 @@ function App() {
       await api.deleteHabit(id)
       await loadData()
     } catch (err) {
-      setError('Failed to delete habit')
+      setError('Không thể xóa habit. Thử lại sau.')
       console.error(err)
     }
   }
 
-  const handleMarkComplete = async (habitId, date, startTime, endTime, logId, isDelete) => {
+  const handleMarkComplete = async (habitId, date, startTime = '', endTime = '') => {
     try {
       setError(null)
-      if (isDelete) {
-        await api.deleteLog(logId)
-      } else if (logId) {
-        await api.updateLog(logId, startTime, endTime)
-      } else {
-        await api.createLog(habitId, date, startTime, endTime)
-      }
+      await api.createLog(habitId, date, '', startTime, endTime)
       await loadData()
     } catch (err) {
-      setError('Failed to mark completion')
+      setError('Không thể cập nhật. Thử lại sau.')
+      console.error(err)
+    }
+  }
+
+  const handleDeleteLog = async (habitId, date) => {
+    try {
+      setError(null)
+      await api.deleteLog(habitId, date)
+      await loadData()
+    } catch (err) {
+      setError('Không thể xóa. Thử lại sau.')
       console.error(err)
     }
   }
 
   return (
-    <div className="app-container">
+    <div className="app-layout">
       <Sidebar currentPage={currentPage} onNavigate={setCurrentPage} />
-      <div className="main-content">
-        <Header />
-        {currentPage === 'habits' && (
-          <HabitsList
-            habits={habits}
-            logs={logs}
-            onDelete={handleDeleteHabit}
-            onMarkComplete={handleMarkComplete}
-            isLoading={loading}
-            error={error}
-          />
-        )}
-        {currentPage === 'add' && (
-          <AddHabit
-            onSubmit={handleAddHabit}
-            isLoading={submitLoading}
-            error={error}
-          />
-        )}
+      <div className="app-main">
+        <Header apiStatus={apiStatus} />
+        <div className="app-content">
+          {currentPage === 'habits' && (
+            <HabitsList
+              habits={habits}
+              logs={logs}
+              onDelete={handleDeleteHabit}
+              onMarkComplete={handleMarkComplete}
+              onDeleteLog={handleDeleteLog}
+              isLoading={loading}
+              error={error}
+            />
+          )}
+          {currentPage === 'add' && (
+            <AddHabit
+              onSubmit={handleAddHabit}
+              isLoading={submitLoading}
+              error={error}
+            />
+          )}
+          {currentPage === 'history' && (
+            <History
+              habits={habits}
+              logs={logs}
+              isLoading={loading}
+              error={error}
+            />
+          )}
+        </div>
       </div>
     </div>
   )

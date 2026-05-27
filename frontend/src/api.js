@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5001';
 
 export const api = {
   async getHabits() {
@@ -25,34 +25,33 @@ export const api = {
     return res.json();
   },
 
-  async getLogs() {
-    const res = await fetch(`${API_URL}/api/logs`);
+  async getLogs(habitId = null) {
+    const url = habitId
+      ? `${API_URL}/api/logs?habit_id=${habitId}`
+      : `${API_URL}/api/logs`;
+    const res = await fetch(url);
     if (!res.ok) throw new Error('Failed to fetch logs');
     return res.json();
   },
 
-  async createLog(habitId, date, startTime, endTime) {
+  async createLog(habitId, completedDate, note = '', startTime = '', endTime = '') {
     const res = await fetch(`${API_URL}/api/logs`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ habitId, date, startTime, endTime }),
+      body: JSON.stringify({
+        habit_id: habitId,
+        completed_date: completedDate,
+        note,
+        start_time: startTime || null,
+        end_time: endTime || null,
+      }),
     });
     if (!res.ok) throw new Error('Failed to create log');
     return res.json();
   },
 
-  async updateLog(logId, startTime, endTime) {
-    const res = await fetch(`${API_URL}/api/logs/${logId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ startTime, endTime }),
-    });
-    if (!res.ok) throw new Error('Failed to update log');
-    return res.json();
-  },
-
-  async deleteLog(logId) {
-    const res = await fetch(`${API_URL}/api/logs/${logId}`, {
+  async deleteLog(habitId, completedDate) {
+    const res = await fetch(`${API_URL}/api/logs?habit_id=${habitId}&completed_date=${completedDate}`, {
       method: 'DELETE',
     });
     if (!res.ok) throw new Error('Failed to delete log');

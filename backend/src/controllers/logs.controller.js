@@ -1,140 +1,90 @@
 import pool from "../db/index.js";
 
-export const getLogs = async (req, res, next) => {
+// GET /api/logs
+export const getAllLogs = async (req, res, next) => {
   try {
-    const connection = await pool.getConnection();
-    const [logs] = await connection.query(
-      "SELECT id, habit_id, DATE_FORMAT(date, '%Y-%m-%d') as date, start_time, end_time, created_at FROM logs ORDER BY date DESC"
-    );
-    connection.release();
-    res.json(logs);
-  } catch (err) {
-    next(err);
+    const { habit_id } = req.query;
+
+    let query = `
+      SELECT logs.*, habits.name as habit_name 
+      FROM logs 
+      JOIN habits ON logs.habit_id = habits.id
+    `;
+    let params = [];
+
+    if (habit_id) {
+      query += " WHERE logs.habit_id = $1";
+      params.push(habit_id);
+    }
+
+    query += " ORDER BY logs.completed_date DESC, logs.created_at DESC";
+
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (error) {
+    next(error);
   }
 };
 
+// POST /api/logs
 export const createLog = async (req, res, next) => {
   try {
-    const { habitId, date, startTime, endTime } = req.body;
+    const { habit_id, completed_date, note, start_time, end_time } = req.body;
 
-    if (!habitId || !date) {
-      return res.status(400).json({
-        error: "Habit ID and date are required"
-      });
+    if (!habit_id) {
+      return res.status(400).json({ error: "habit_id is required" });
+    }
+    if (!completed_date) {
+      return res.status(400).json({ error: "completed_date is required" });
     }
 
-    if (startTime && endTime) {
-      const [start, end] = [startTime, endTime].map(t => t.split(':').map(Number));
-      const startMinutes = start[0] * 60 + start[1];
-      const endMinutes = end[0] * 60 + end[1];
-      if (endMinutes <= startMinutes) {
-        return res.status(400).json({
-          error: "End time must be after start time"
-        });
-      }
+    const habitCheck = await pool.query(
+      "SELECT id FROM habits WHERE id = $1",
+      [habit_id]
+    );
+    if (habitCheck.rows.length === 0) {
+      return res.status(404).json({ error: "Habit not found" });
     }
 
-    const connection = await pool.getConnection();
+    const result = await pool.query(
+      `INSERT INTO logs (habit_id, completed_date, note, start_time, end_time) 
+       VALUES ($1, $2, $3, $4, $5) 
+       ON CONFLICT (habit_id, completed_date) 
+       DO UPDATE SET 
+         note = EXCLUDED.note,
+         start_time = EXCLUDED.start_time,
+         end_time = EXCLUDED.end_time,
+         created_at = CURRENT_TIMESTAMP
+       RETURNING *`,
+      [habit_id, completed_date, note || null, start_time || null, end_time || null]
+    );
 
-    try {
-      const [result] = await connection.query(
-        "INSERT INTO logs (habit_id, date, start_time, end_time) VALUES (?, ?, ?, ?)",
-        [habitId, date, startTime || null, endTime || null]
-      );
-
-      const [log] = await connection.query(
-        "SELECT id, habit_id, DATE_FORMAT(date, '%Y-%m-%d') as date, start_time, end_time, created_at FROM logs WHERE id = ?",
-        [result.insertId]
-      );
-
-      connection.release();
-      res.status(201).json(log[0]);
-    } catch (err) {
-      connection.release();
-      if (err.code === "ER_DUP_ENTRY") {
-        return res.status(200).json({
-          message: "Log already exists for this date"
-        });
-      }
-      throw err;
-    }
-  } catch (err) {
-    next(err);
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    next(error);
   }
 };
 
-export const updateLog = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const { startTime, endTime } = req.body;
-
-    if (!id) {
-      return res.status(400).json({
-        error: "Log ID is required"
-      });
-    }
-
-    if (startTime && endTime) {
-      const [start, end] = [startTime, endTime].map(t => t.split(':').map(Number));
-      const startMinutes = start[0] * 60 + start[1];
-      const endMinutes = end[0] * 60 + end[1];
-      if (endMinutes <= startMinutes) {
-        return res.status(400).json({
-          error: "End time must be after start time"
-        });
-      }
-    }
-
-    const connection = await pool.getConnection();
-
-    try {
-      await connection.query(
-        "UPDATE logs SET start_time = ?, end_time = ? WHERE id = ?",
-        [startTime || null, endTime || null, id]
-      );
-
-      const [log] = await connection.query(
-        "SELECT id, habit_id, DATE_FORMAT(date, '%Y-%m-%d') as date, start_time, end_time, created_at FROM logs WHERE id = ?",
-        [id]
-      );
-
-      connection.release();
-      res.status(200).json(log[0]);
-    } catch (err) {
-      connection.release();
-      throw err;
-    }
-  } catch (err) {
-    next(err);
-  }
-};
-
+// DELETE /api/logs?habit_id=&completed_date=
 export const deleteLog = async (req, res, next) => {
   try {
-    const { id } = req.params;
+    const { habit_id, completed_date } = req.query;
 
-    if (!id) {
-      return res.status(400).json({
-        error: "Log ID is required"
-      });
+    if (!habit_id || !completed_date) {
+      return res.status(400).json({ error: "habit_id and completed_date are required" });
     }
 
-    const connection = await pool.getConnection();
+    const result = await pool.query(
+      "DELETE FROM logs WHERE habit_id = $1 AND completed_date = $2 RETURNING *",
+      [habit_id, completed_date]
+    );
 
-    try {
-      await connection.query(
-        "DELETE FROM logs WHERE id = ?",
-        [id]
-      );
-
-      connection.release();
-      res.status(200).json({ message: "Log deleted successfully" });
-    } catch (err) {
-      connection.release();
-      throw err;
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Log not found" });
     }
-  } catch (err) {
-    next(err);
+
+    res.json({ message: "Deleted", log: result.rows[0] });
+  } catch (error) {
+    next(error);
   }
 };
-

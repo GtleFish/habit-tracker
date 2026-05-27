@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { TimeInputModal } from './TimeInputModal';
-import { DeleteConfirmModal } from './DeleteConfirmModal';
-import { formatTimeRange } from '../utils/timeConverter';
+import { ConfirmModal } from './ConfirmModal';
 
-export function HabitCard({ habit, logs, onDelete, onMarkComplete }) {
+export function HabitCard({ habit, logs, onDelete, onMarkComplete, onDeleteLog }) {
   const [modalOpen, setModalOpen] = useState(false);
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
-  const [selectedLog, setSelectedLog] = useState(null);
+  const [existingLog, setExistingLog] = useState(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const getLast7Days = () => {
     const days = [];
@@ -19,134 +18,142 @@ export function HabitCard({ habit, logs, onDelete, onMarkComplete }) {
     return days;
   };
 
-  const getStatusForDate = (dateStr) => {
-    const log = logs.find(l => l.date === dateStr && l.habit_id === habit.id);
-    if (log) return 'completed';
-    if (new Date(dateStr) > new Date()) return 'future';
-    return 'missed';
+  const getLog = (dateStr) => {
+    return logs.find(
+      (l) => l.completed_date?.split('T')[0] === dateStr && l.habit_id === habit.id
+    ) || null;
   };
 
-  const getLogForDate = (dateStr) => {
-    return logs.find(l => l.date === dateStr && l.habit_id === habit.id);
+  const isCompleted = (dateStr) => !!getLog(dateStr);
+
+  const isFuture = (dateStr) => {
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    return new Date(dateStr + 'T00:00:00') > today;
   };
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'completed':
-        return '✓';
-      case 'missed':
-        return '✕';
-      default:
-        return '⊘';
-    }
-  };
-
-  const getStatusClass = (status) => {
-    switch (status) {
-      case 'completed':
-        return 'day-completed';
-      case 'missed':
-        return 'day-missed';
-      default:
-        return 'day-future';
-    }
+  const formatDay = (dateStr) => {
+    const date = new Date(dateStr + 'T00:00:00');
+    return {
+      day: date.toLocaleDateString('vi-VN', { weekday: 'short' }),
+      num: date.getDate(),
+    };
   };
 
   const handleDayClick = (date) => {
-    const status = getStatusForDate(date);
-    if (status === 'future') return;
+    if (isFuture(date)) return;
+    const log = getLog(date);
     setSelectedDate(date);
-    setSelectedLog(getLogForDate(date));
+    setExistingLog(log); // null = tạo mới, object = edit
     setModalOpen(true);
   };
 
   const handleModalSave = (startTime, endTime) => {
-    onMarkComplete(habit.id, selectedDate, startTime, endTime, selectedLog?.id);
     setModalOpen(false);
+    onMarkComplete(habit.id, selectedDate, startTime, endTime);
     setSelectedDate(null);
-    setSelectedLog(null);
+    setExistingLog(null);
+  };
+
+  const handleModalDelete = () => {
+    setModalOpen(false);
+    onDeleteLog(habit.id, selectedDate);
+    setSelectedDate(null);
+    setExistingLog(null);
   };
 
   const handleModalCancel = () => {
     setModalOpen(false);
     setSelectedDate(null);
-    setSelectedLog(null);
+    setExistingLog(null);
   };
 
-  const handleLogDelete = (logId) => {
-    onMarkComplete(null, null, null, null, logId, true);
-    setModalOpen(false);
-    setSelectedDate(null);
-    setSelectedLog(null);
-  };
-
-  const handleDeleteClick = () => {
-    setDeleteConfirmOpen(true);
-  };
-
-  const handleDeleteConfirm = () => {
-    setDeleteConfirmOpen(false);
-    onDelete(habit.id);
-  };
-
-  const handleDeleteCancel = () => {
-    setDeleteConfirmOpen(false);
-  };
-
-  const getTooltip = (date) => {
-    const log = getLogForDate(date);
-    if (!log) return date;
-    return formatTimeRange(log.start_time, log.end_time);
+  const getLogTime = (dateStr) => {
+    const log = getLog(dateStr);
+    if (!log?.start_time || !log?.end_time) return null;
+    return `${log.start_time.slice(0, 5)}–${log.end_time.slice(0, 5)}`;
   };
 
   const last7Days = getLast7Days();
+  const completedCount = last7Days.filter((d) => isCompleted(d)).length;
+  const percentage = Math.round((completedCount / 7) * 100);
 
   return (
-    <div className="habit-card">
-      <div className="habit-card-header">
-        <div>
-          <h3>{habit.name}</h3>
-          {habit.description && <p className="habit-description">{habit.description}</p>}
+    <>
+      <div className="habit-card">
+        <div className="habit-card-header">
+          <div className="habit-info">
+            <h3 className="habit-name">{habit.name}</h3>
+            {habit.description && (
+              <p className="habit-description">{habit.description}</p>
+            )}
+            <span className="habit-streak">
+              ✅ {completedCount}/7 ngày — {percentage}% tuần này
+            </span>
+          </div>
+          <button
+            className="btn-delete"
+            onClick={() => setConfirmOpen(true)}
+            title="Xóa habit"
+            aria-label={`Xóa habit ${habit.name}`}
+          >
+            🗑️
+          </button>
         </div>
-        <button className="btn-delete" onClick={handleDeleteClick}>
-          ✕
-        </button>
-      </div>
 
-      <div className="habit-tracker">
-        {last7Days.map((date, idx) => {
-          const dayNum = idx + 1;
-          const status = getStatusForDate(date);
-          return (
-            <div key={date} className="day-column">
-              <div className="day-label">Day {dayNum}</div>
+        <div className="habit-days">
+          {last7Days.map((date) => {
+            const completed = isCompleted(date);
+            const future = isFuture(date);
+            const logTime = getLogTime(date);
+
+            let statusClass = 'day-missed';
+            if (completed) statusClass = 'day-completed';
+            else if (future) statusClass = 'day-future';
+
+            const { day, num } = formatDay(date);
+
+            return (
               <button
-                className={`day-status ${getStatusClass(status)}`}
+                key={date}
+                className={`day-btn ${statusClass}`}
                 onClick={() => handleDayClick(date)}
-                title={getTooltip(date)}
-                disabled={status === 'future'}
+                disabled={future}
+                title={logTime ? `${date} · ${logTime}` : date}
+                aria-label={`${date}: ${completed ? 'Đã hoàn thành - bấm để chỉnh sửa' : future ? 'Chưa đến' : 'Chưa hoàn thành'}`}
               >
-                {getStatusIcon(status)}
+                <span className="day-label">{day}</span>
+                <span className="day-num">{num}</span>
+                <span className="day-icon">
+                  {completed ? '✓' : future ? '·' : '○'}
+                </span>
+                {logTime && (
+                  <span className="day-time">{logTime}</span>
+                )}
               </button>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
 
       <TimeInputModal
         isOpen={modalOpen}
         date={selectedDate}
-        log={selectedLog}
-        onSave={handleModalSave}
-        onCancel={handleModalCancel}
-        onDelete={handleLogDelete}
-      />
-      <DeleteConfirmModal
         habitName={habit.name}
-        isOpen={deleteConfirmOpen}
-        onConfirm={handleDeleteConfirm}
-        onCancel={handleDeleteCancel}
+        existingLog={existingLog}
+        onSave={handleModalSave}
+        onDelete={handleModalDelete}
+        onCancel={handleModalCancel}
       />
-    </div>
+
+      <ConfirmModal
+        isOpen={confirmOpen}
+        title="🗑️ Xóa Habit"
+        message={`Bạn có chắc muốn xóa habit "${habit.name}" không? Tất cả lịch sử sẽ bị xóa và không thể khôi phục.`}
+        confirmLabel="Xóa"
+        onConfirm={() => { setConfirmOpen(false); onDelete(habit.id); }}
+        onCancel={() => setConfirmOpen(false)}
+      />
+    </>
   );
 }
