@@ -4,6 +4,23 @@ Tài liệu này hướng dẫn chi tiết cách cấu hình tự động triể
 
 ---
 
+## 0. Các Đường Link Deploy
+
+| Mục | Đường link |
+| :--- | :--- |
+| Frontend public (Vercel) | [https://habit-tracker-frontend-vert.vercel.app](https://habit-tracker-frontend-vert.vercel.app) |
+| Backend API public (Render) | [https://habit-tracker-r2tw.onrender.com](https://habit-tracker-r2tw.onrender.com) |
+| Backend health check | [https://habit-tracker-r2tw.onrender.com/api/health](https://habit-tracker-r2tw.onrender.com/api/health) |
+| Backend habits API | [https://habit-tracker-r2tw.onrender.com/api/habits](https://habit-tracker-r2tw.onrender.com/api/habits) |
+| GitHub nhánh `develop` | [https://github.com/GtleFish/habit-tracker/tree/develop](https://github.com/GtleFish/habit-tracker/tree/develop) |
+| Vercel Project Dashboard | [https://vercel.com/hoang-ngoc-tue-s-projects/habit-tracker-frontend](https://vercel.com/hoang-ngoc-tue-s-projects/habit-tracker-frontend) |
+| Render Dashboard | [https://dashboard.render.com/](https://dashboard.render.com/) |
+
+> Nếu Vercel tạo URL production khác hoặc bạn dùng custom domain, hãy cập nhật lại dòng **Frontend public (Vercel)** theo URL đang hiển thị trong tab **Deployments** của Vercel.
+> Khi mở link Backend API public ở đường dẫn gốc `/` và thấy `Cannot GET /`, đó không nhất thiết là lỗi deploy. Hãy kiểm tra bằng endpoint `/api/health`; nếu trả về `{ "ok": true }` thì backend đang chạy.
+
+---
+
 ## 1. Cấu Hình Deploy Nhánh `develop`
 
 Để đồng bộ hóa quy trình, tất cả các môi trường (Staging/Production) sẽ được phân phát trực tiếp từ nhánh phát triển chính **`develop`**.
