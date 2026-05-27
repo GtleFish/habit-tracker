@@ -31,7 +31,14 @@ export const api = {
       : `${API_URL}/api/logs`;
     const res = await fetch(url);
     if (!res.ok) throw new Error('Failed to fetch logs');
-    return res.json();
+    const logs = await res.json();
+    return (logs || []).map((log) => ({
+      ...log,
+      habit_id: log.habit_id ?? log.habitId,
+      completed_date: log.completed_date ?? log.date,
+      start_time: log.start_time ?? log.startTime,
+      end_time: log.end_time ?? log.endTime,
+    }));
   },
 
   async createLog(habitId, completedDate, note = '', startTime = '', endTime = '') {
@@ -40,10 +47,14 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         habit_id: habitId,
+        habitId,
         completed_date: completedDate,
+        date: completedDate,
         note,
         start_time: startTime || null,
+        startTime: startTime || null,
         end_time: endTime || null,
+        endTime: endTime || null,
       }),
     });
     if (!res.ok) throw new Error('Failed to create log');
