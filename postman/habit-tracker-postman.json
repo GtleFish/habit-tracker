@@ -9,9 +9,35 @@
   "item": [
     {
       "name": "Health Check",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
       "request": {
         "method": "GET",
-        "header": []
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"name\": \"Test Habit\",\r\n  \"description\": \"Test description\"\r\n}"
+        },
+        "url": {
+          "raw": "https://habit-tracker-r2tw.onrender.com/api/health",
+          "protocol": "https",
+          "host": [
+            "habit-tracker-r2tw",
+            "onrender",
+            "com"
+          ],
+          "path": [
+            "api",
+            "health"
+          ]
+        }
       },
       "response": []
     },

@@ -17,4 +17,9 @@ const pool = new Pool({
       : false,
 });
 
+// Handle pool errors
+pool.on("error", (err) => {
+  console.error("Unexpected error on idle client", err);
+});
+
 export default pool;
