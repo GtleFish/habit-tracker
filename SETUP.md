@@ -4,13 +4,19 @@
 
 You need to have **MySQL** installed and running on your system.
 
-### Install MySQL
+### Bước 2: Chạy toàn bộ hệ thống
+```bash
+docker-compose up -d
+```
 
-#### Windows
-1. Download from: https://dev.mysql.com/downloads/mysql/
-2. Run the installer and follow the setup wizard
-3. Remember the password for the `root` user
-4. Make sure MySQL service is running
+### Bước 3: Chạy migration
+```bash
+docker exec habit-tracker-backend npm run migrate
+```
+#
+### Bước 4: Kiểm tra
+- Backend: http://localhost:5000/api/health
+- Database: localhost:5432
 
 #### macOS
 ```bash
@@ -45,11 +51,9 @@ Or run directly:
 mysql -u root -p -e "CREATE DATABASE habits;"
 ```
 
-### 2. Update Backend Environment
-Edit `backend/.env` with your MySQL credentials:
-
-```env
-PORT=3000
+Tạo file `.env`:
+```
+PORT=5000
 DB_HOST=localhost
 DB_PORT=3306
 DB_USER=root
@@ -79,24 +83,37 @@ You should see: `✓ Database tables created successfully`
 
 **Terminal 1 - Backend:**
 ```bash
-cd backend
-npm run dev
+curl http://localhost:5000/api/health
 ```
 
-Should show: `Server running on port 3000`
+### 2. Tạo habit mới
+```bash
+curl -X POST http://localhost:5000/api/habits \
+  -H "Content-Type: application/json" \
+  -d "{\"name\":\"Exercise\",\"description\":\"Daily workout\"}"
+```
 
 **Terminal 2 - Frontend:**
 ```bash
-cd frontend
-npm run dev
+curl http://localhost:5000/api/habits
 ```
 
-Should show: `➜ Local: http://localhost:5174/`
+### 4. Đánh dấu hoàn thành
+```bash
+curl -X POST http://localhost:5000/api/logs \
+  -H "Content-Type: application/json" \
+  -d "{\"habit_id\":1,\"completed_date\":\"2024-01-15\",\"note\":\"Done!\"}"
+```
 
-### 6. Open in Browser
-Go to: **http://localhost:5174**
+### 5. Xem lịch sử
+```bash
+curl http://localhost:5000/api/logs?habit_id=1
+```
 
-## Usage
+### 6. Xóa habit
+```bash
+curl -X DELETE http://localhost:5000/api/habits/1
+```
 
 1. Click **"Add Habit"** in the sidebar
 2. Enter habit title and description
@@ -110,77 +127,15 @@ Go to: **http://localhost:5174**
 
 ## Troubleshooting
 
-### "Failed to load data" error
-- Make sure backend is running on port 3000
-- Check `.env` file has correct MySQL credentials
-- Verify MySQL service is running: `mysql -u root -p -e "SELECT 1;"`
+### Lỗi: "Connection refused" khi kết nối database
+- Kiểm tra PostgreSQL đã chạy: `docker ps` hoặc `pg_isready`
+- Kiểm tra thông tin kết nối trong `.env`
 
-### Database connection error
-- Check if MySQL is running
-- Verify database `habits` exists: `mysql -u root -p -e "SHOW DATABASES;"`
-- Verify `.env` credentials match your MySQL setup
-- Run `npm run init-db` again to create tables
+### Lỗi: "Port 5000 already in use"
+- Đổi PORT trong `.env` hoặc kill process đang dùng port 5000
 
-### Error: "Access denied for user 'root'@'localhost'"
-- Your MySQL password is incorrect
-- Update `DB_PASSWORD` in `.env`
-- Or reset MySQL password (search for "reset mysql password")
-
-### Port already in use
-- Frontend: `npm run dev -- --port 5175`
-- Backend: `PORT=3001 npm run dev`
-- MySQL: Change `DB_PORT` in `.env` and update connection
-
-## Project Structure
-
-```
-habit-tracker/
-├── frontend/              React UI
-│   ├── src/
-│   │   ├── components/   (Header, Sidebar, HabitCard)
-│   │   ├── pages/        (HabitsList, AddHabit)
-│   │   ├── api.js        (API calls)
-│   │   ├── App.jsx       (Main app)
-│   │   └── App.css       (Styles)
-│   └── .env              (API URL config)
-│
-└── backend/              Node.js + Express API
-    ├── src/
-    │   ├── controllers/  (Business logic)
-    │   ├── routes/       (API endpoints)
-    │   ├── middleware/   (Error handling)
-    │   └── db/           (MySQL connection)
-    ├── scripts/
-    │   └── init-db.js    (Create tables)
-    └── .env              (MySQL config)
-```
-
-## API Endpoints
-
-- `GET /api/health` - Health check
-- `GET /api/habits` - List all habits
-- `POST /api/habits` - Create habit
-- `DELETE /api/habits/:id` - Delete habit
-- `GET /api/logs` - List all logs
-- `POST /api/logs` - Create log entry
-
-## Database Schema
-
-### habits table
-- `id` - AUTO_INCREMENT PRIMARY KEY
-- `name` - VARCHAR(255) NOT NULL
-- `description` - TEXT
-- `created_at` - TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-- `updated_at` - TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE
-
-### logs table
-- `id` - AUTO_INCREMENT PRIMARY KEY
-- `habit_id` - INT NOT NULL (FOREIGN KEY to habits.id)
-- `date` - DATE NOT NULL
-- `created_at` - TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-- UNIQUE constraint on (habit_id, date)
-
-## Quick MySQL Commands
+### Lỗi: "relation does not exist"
+- Chạy lại migration: `npm run migrate`
 
 ```bash
 # Connect to MySQL
