@@ -30,10 +30,17 @@ async function runMigrations() {
       `Connecting to ${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}...`
     );
 
-    const migrationFile = path.join(__dirname, "migrations", "001_init.sql");
-    const sql = fs.readFileSync(migrationFile, "utf8");
+    const migrationsDir = path.join(__dirname, "migrations");
+    const migrationFiles = fs
+      .readdirSync(migrationsDir)
+      .filter((file) => file.endsWith(".sql"))
+      .sort();
 
-    await pool.query(sql);
+    for (const file of migrationFiles) {
+      console.log(`Running migration ${file}...`);
+      const sql = fs.readFileSync(path.join(migrationsDir, file), "utf8");
+      await pool.query(sql);
+    }
 
     console.log("✅ Migrations completed successfully!");
     await pool.end();
