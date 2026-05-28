@@ -39,7 +39,7 @@ cp frontend/.env.example frontend/.env
 
 **Cập nhật các giá trị:**
 - `DB_PASSWORD`: Mật khẩu PostgreSQL
-- `PORT`: Port cho backend (default: 5000)
+- `PORT`: Port cho backend (default: 3000)
 - `VITE_API_URL`: URL của backend API
 
 #### Bước 3: Start Database
@@ -77,7 +77,7 @@ npm run dev
 **Expected output:**
 ```
 [nodemon] starting `node --env-file .env src/server.js`
-Server running on port 5000
+Server running on port 3000
 ```
 
 #### Bước 6: Start Frontend (Development Mode)
@@ -91,7 +91,7 @@ npm run dev
 ```
 VITE v8.0.12  ready in 500 ms
 
-➜  Local:   http://localhost:5001/
+➜  Local:   http://localhost:5173/
 ➜  Network: use --host to expose
 ```
 
@@ -344,15 +344,15 @@ Các secrets cần được cấu hình trong GitHub repository settings:
 #### Development
 ```env
 NODE_ENV=development
-PORT=5000
+PORT=3000
 DB_HOST=localhost
-VITE_API_URL=http://localhost:5000
+VITE_API_URL=http://localhost:3000
 ```
 
 #### Staging
 ```env
 NODE_ENV=staging
-PORT=5000
+PORT=3000
 DB_HOST=staging-db.example.com
 VITE_API_URL=https://staging-api.example.com
 ```
@@ -360,7 +360,7 @@ VITE_API_URL=https://staging-api.example.com
 #### Production
 ```env
 NODE_ENV=production
-PORT=5000
+PORT=3000
 DB_HOST=prod-db.example.com
 VITE_API_URL=https://api.example.com
 ```
@@ -428,7 +428,7 @@ git revert <commit-hash>
 docker-compose up -d
 
 # 4. Verify
-curl http://localhost:5000/api/health
+curl http://localhost:3000/api/health
 ```
 
 ## Monitoring & Alerting
@@ -443,7 +443,7 @@ Response: {"ok": true}
 docker exec habit-tracker-db pg_isready -U postgres
 
 # Frontend availability
-curl -I http://localhost:5001
+curl -I http://localhost:5173
 ```
 
 ### Metrics to Monitor
@@ -559,7 +559,7 @@ docker exec -i habit-tracker-db psql -U postgres -d habits < backup.sql
 docker-compose up -d
 
 # 4. Verify data integrity
-curl http://localhost:5000/api/habits
+curl http://localhost:3000/api/habits
 ```
 
 ### Recovery Time Objective (RTO)
@@ -654,7 +654,7 @@ docker exec -it habit-tracker-db psql -U postgres -d habits
 ### Issue 3: Port Already in Use
 ```bash
 # Find process using port
-netstat -ano | findstr :5000
+netstat -ano | findstr :3000
 
 # Kill process (Windows)
 taskkill /PID <PID> /F
