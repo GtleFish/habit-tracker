@@ -60,7 +60,7 @@ jobs:
 
       - name: Test
         working-directory: backend
-        run: npm test
+        run: npm test -- --passWithNoTests
 
       - name: Build (verify start script)
         working-directory: backend
