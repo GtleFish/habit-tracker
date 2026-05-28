@@ -1,158 +1,225 @@
-# Hướng Dẫn Triển Khai & Xử Lý Sự Cố (Deployment & Troubleshooting Guide)
+# Huong Dan Trien Khai & Xu Ly Su Co
 
-Tài liệu này hướng dẫn chi tiết cách cấu hình tự động triển khai (Auto-Deploy) từ nhánh **`develop`** lên **Render** (Backend) và **Vercel** (Frontend), cách vận hành ứng dụng trên Local (có/không dùng Docker) và các bước xử lý sự cố chi tiết khi triển khai gặp lỗi.
+Tai lieu nay huong dan deploy du an Habit Tracker tu nhanh **`develop`** len **Render** cho ca **Backend API** va **Frontend UI**.
 
 ---
 
-## 0. Các Đường Link Deploy
+## 0. Cac Duong Link Deploy
 
-| Mục | Đường link |
+| Muc | Duong link |
 | :--- | :--- |
-| Frontend public (Vercel) | [https://habit-tracker-frontend-vert.vercel.app](https://habit-tracker-frontend-vert.vercel.app) |
+| Frontend public (Render) | [https://habit-tracker-frontend-nn40.onrender.com/](https://habit-tracker-frontend-nn40.onrender.com/) |
 | Backend API public (Render) | [https://habit-tracker-r2tw.onrender.com](https://habit-tracker-r2tw.onrender.com) |
 | Backend health check | [https://habit-tracker-r2tw.onrender.com/api/health](https://habit-tracker-r2tw.onrender.com/api/health) |
 | Backend habits API | [https://habit-tracker-r2tw.onrender.com/api/habits](https://habit-tracker-r2tw.onrender.com/api/habits) |
-| GitHub nhánh `develop` | [https://github.com/GtleFish/habit-tracker/tree/develop](https://github.com/GtleFish/habit-tracker/tree/develop) |
-| Vercel Project Dashboard | [https://vercel.com/hoang-ngoc-tue-s-projects/habit-tracker-frontend](https://vercel.com/hoang-ngoc-tue-s-projects/habit-tracker-frontend) |
+| GitHub nhanh `develop` | [https://github.com/GtleFish/habit-tracker/tree/develop](https://github.com/GtleFish/habit-tracker/tree/develop) |
 | Render Dashboard | [https://dashboard.render.com/](https://dashboard.render.com/) |
 
-> Nếu Vercel tạo URL production khác hoặc bạn dùng custom domain, hãy cập nhật lại dòng **Frontend public (Vercel)** theo URL đang hiển thị trong tab **Deployments** của Vercel.
-> Khi mở link Backend API public ở đường dẫn gốc `/` và thấy `Cannot GET /`, đó không nhất thiết là lỗi deploy. Hãy kiểm tra bằng endpoint `/api/health`; nếu trả về `{ "ok": true }` thì backend đang chạy.
+> Khi mo backend o duong dan goc `/` va thay `Cannot GET /`, day khong nhat thiet la loi. Hay kiem tra bang endpoint `/api/health`; neu tra ve `{ "ok": true }` thi backend dang chay.
 
 ---
 
-## 1. Cấu Hình Deploy Nhánh `develop`
+## 1. Cau Hinh Deploy Tren Render
 
-Để đồng bộ hóa quy trình, tất cả các môi trường (Staging/Production) sẽ được phân phát trực tiếp từ nhánh phát triển chính **`develop`**.
+Tat ca moi truong deploy su dung truc tiep tu nhanh **`develop`**. Moi khi push code moi len `develop`, Render se tu dong build va deploy lai neu Auto-Deploy dang bat.
 
-### 🔹 1.1. Cấu Hình Trên Render (Backend API)
-Để Render tự động biên dịch và triển khai mỗi khi bạn push code mới lên nhánh `develop` trên GitHub:
-1. Truy cập [Render Dashboard](https://dashboard.render.com/).
-2. Chọn Web Service của bạn (ví dụ: `habit-tracker-backend`).
-3. Điều hướng tới mục **Settings** ở menu bên trái.
-4. Tìm trường **Branch** và đổi giá trị thành **`develop`**.
-5. Cuộn xuống dưới cùng và nhấn **Save Changes**.
-6. *Từ bây giờ, Render sẽ tự động deploy mỗi khi nhánh `develop` trên GitHub được cập nhật.*
+### 1.1. Backend API
 
-### 🔹 1.2. Cấu Hinh Trên Vercel (Frontend UI)
-Tùy thuộc vào việc dự án Vercel của bạn đã được kết nối với GitHub hay chưa, hãy chọn một trong hai phương án sau:
+Tao hoac cap nhat Web Service backend tren Render:
 
-#### 👉 Trường Hợp A: Vercel ĐÃ kết nối với GitHub (Auto-Deploy)
-Nếu Vercel của bạn được liên kết trực tiếp với GitHub Repository:
-1. Truy cập [Vercel Dashboard](https://vercel.com/) -> Chọn dự án `habit-tracker-frontend`.
-2. Đi tới **Settings** -> **Git**.
-3. Tại phần **Production Branch**, thay đổi nhánh mặc định (thường là `main` hoặc `master`) thành **`develop`** và lưu lại.
-4. *Lưu ý quan trọng:* Trong **Settings** -> **General** -> mục **Root Directory**, bạn bắt buộc phải nhập là **`frontend`** (vì đây là cấu trúc monorepo chứa cả backend và frontend).
+| Thiet lap | Gia tri |
+| :--- | :--- |
+| Service type | Web Service |
+| Repository | `GtleFish/habit-tracker` |
+| Branch | `develop` |
+| Root Directory | `backend` |
+| Runtime | Node |
+| Build Command | `npm ci` |
+| Start Command | `npm run migrate && npm start` |
 
-#### 👉 Trường Hợp B: Vercel CHƯA kết nối với GitHub (Deploy Thủ Công qua CLI)
-Nếu phần Git của bạn hiển thị thông báo *"This Project is not connected to a Git repository"*:
-Bạn không cần đổi cài đặt trên web, thay vào đó bạn sẽ deploy trực tiếp từ local:
+Start command phai chay migration truoc khi start API:
+
 ```bash
-cd frontend
-# Chạy lệnh build và deploy trực tiếp code của nhánh hiện tại lên Vercel
-vercel --prod --yes
+npm run migrate && npm start
 ```
 
+### 1.2. Frontend UI
+
+Tao hoac cap nhat Web Service frontend tren Render:
+
+| Thiet lap | Gia tri |
+| :--- | :--- |
+| Service type | Web Service |
+| Repository | `GtleFish/habit-tracker` |
+| Branch | `develop` |
+| Root Directory | `frontend` |
+| Runtime | Docker |
+| Dockerfile Path | `./Dockerfile` |
+
+Frontend hien dang duoc serve bang Nginx trong Docker image. Public URL hien tai:
+
+```text
+https://habit-tracker-frontend-nn40.onrender.com/
+```
+
+Neu cau hinh frontend theo Static Site thay vi Docker Web Service, dung:
+
+| Thiet lap | Gia tri |
+| :--- | :--- |
+| Root Directory | `frontend` |
+| Build Command | `npm ci && npm run build` |
+| Publish Directory | `dist` |
+| Environment Variable | `VITE_API_URL=https://habit-tracker-r2tw.onrender.com` |
+
 ---
 
-## 2. Các Biến Môi Trường Quan Trọng
+## 2. Bien Moi Truong
 
-### 🗄️ Backend (Render - PostgreSQL)
-Cấu hình trong mục **Settings -> Environment Variables** trên Render:
+### Backend
 
-| Tên Biến | Giá trị / Ý nghĩa |
+Cau hinh trong **Render Dashboard -> Backend service -> Environment**:
+
+| Ten bien | Gia tri / y nghia |
 | :--- | :--- |
-| `PORT` | `3000` (hoặc để trống để Render tự cấu hình) |
-| `DB_HOST` | Địa chỉ host của database PostgreSQL trên Render |
+| `PORT` | Co the de trong de Render tu cap, hoac dat `5000`/`3000` theo service |
+| `DB_HOST` | Host PostgreSQL tren Render |
 | `DB_PORT` | `5432` |
-| `DB_USER` | Tên đăng nhập database |
-| `DB_PASSWORD` | Mật khẩu database |
-| `DB_NAME` | Tên database |
-| `NODE_ENV` | `production` (bắt buộc để kích hoạt chế độ SSL bảo mật kết nối với PostgreSQL) |
+| `DB_USER` | User database |
+| `DB_PASSWORD` | Password database |
+| `DB_NAME` | Ten database |
+| `NODE_ENV` | `production` |
 
-> [!IMPORTANT]
-> **Start Command** trên Render phải được thiết lập chính xác là:
-> ```bash
-> npm run migrate && npm start
-> ```
-> Lệnh này đảm bảo Render tự động chạy các tệp migration tạo bảng dữ liệu mới nhất trước khi bật API lên.
+`NODE_ENV=production` giup ket noi PostgreSQL dung SSL trong moi truong Render.
 
-### 💻 Frontend (Vercel)
-Cấu hình trong **Settings -> Environment Variables** trên Vercel:
+### Frontend
 
-| Tên Biến | Giá trị / Ý nghĩa |
+Neu frontend deploy bang Docker hien tai, app goi API theo relative path `/api` va Nginx proxy request sang backend.
+
+Neu deploy frontend bang Static Site, can them bien:
+
+| Ten bien | Gia tri |
 | :--- | :--- |
-| `VITE_API_URL` | Địa chỉ URL Backend API đã deploy thành công trên Render (ví dụ: `https://habit-tracker-r2tw.onrender.com`) |
+| `VITE_API_URL` | `https://habit-tracker-r2tw.onrender.com` |
+
+Khong them dau `/` o cuoi URL.
 
 ---
 
-## 3. Hướng Dẫn Xử Lý Sự Cố Khi Deploy Thất Bại (Troubleshooting)
+## 3. Quy Trinh Deploy
 
-Dưới đây là tổng hợp các trường hợp lỗi thường gặp và cách xử lý nhanh chóng:
+### Deploy tu GitHub
 
-### ❌ Lỗi 1: Trang Vercel chỉ hiển thị màn hình mặc định của Vite (Boilerplate)
-* **Triệu chứng:** Khi mở link frontend, bạn chỉ thấy màn hình giới thiệu của Vite "Get started... edit src/App.jsx" thay vì giao diện theo dõi thói quen.
-* **Nguyên nhân:** Thư mục chạy deploy bị cấu hình sai, Vercel đang biên dịch file của thư mục gốc của Git chứa mã nguồn mẫu thay vì mã nguồn thực tế nằm trong `/frontend`.
-* **Cách khắc phục:**
-  1. Nếu deploy qua Git: Truy cập **Vercel Dashboard** -> **Settings** -> **General** -> mục **Root Directory**, sửa thành **`frontend`** và thực hiện Redeploy.
-  2. Nếu deploy qua CLI: Đảm bảo bạn đã dùng lệnh `cd frontend` trước khi chạy `vercel --prod --yes`.
+1. Commit code len nhanh `develop`.
+2. Push len GitHub:
 
----
+   ```bash
+   git push origin develop
+   ```
 
-### ❌ Lỗi 2: Frontend load thành công nhưng không lấy được dữ liệu / Lỗi "Không thể kết nối backend"
-* **Triệu chứng:** Giao diện Habit Tracker hiển thị nhưng danh sách thói quen trống trơn và có dòng thông báo lỗi kết nối.
-* **Nguyên nhân 1 (Thời gian chờ):** Bạn sử dụng Render gói Free. Nếu không có lượt truy cập trong 15 phút, server API sẽ tự động ngủ (Sleep). Lần truy cập đầu tiên có thể mất từ 30–50 giây để server "thức dậy".
-  * *Giải pháp:* Hãy kiên nhẫn đợi 1 phút và F5 tải lại trang.
-* **Nguyên nhân 2 (Thiếu biến môi trường):** Vercel chưa nhận diện được địa chỉ API của Backend do thiếu cấu hình biến môi trường.
-  * *Giải pháp:* Truy cập **Vercel Settings** -> **Environment Variables**, tạo biến `VITE_API_URL` với giá trị là đường link backend Render của bạn. Lưu ý **không được chứa dấu gạch chéo `/` ở cuối** (Ví dụ: dùng `https://api.com` thay vì `https://api.com/`). Sau đó, vào tab **Deployments** bấm vào dấu 3 chấm của bản deploy mới nhất -> chọn **Redeploy** để áp dụng biến môi trường mới.
+3. Render tu dong build va deploy lai backend/frontend neu Auto-Deploy dang bat.
+4. Kiem tra backend:
 
----
+   ```bash
+   curl https://habit-tracker-r2tw.onrender.com/api/health
+   ```
 
-### ❌ Lỗi 3: Render báo lỗi Build Failed hoặc Deploy Failed
-* **Triệu chứng:** Bản build của backend trên Render bị đỏ (Failed).
-* **Nguyên nhân 1 (Sai Start Command):** Render cố gắng chạy tệp `.env` nhưng môi trường production không có file vật lý này.
-  * *Giải pháp:* Kiểm tra tệp `package.json` của backend. Đảm bảo script `"start"` là `"node src/server.js"` (không dùng `--env-file .env` vì trên Render các biến môi trường được truyền trực tiếp qua hệ thống).
-* **Nguyên nhân 2 (Lỗi kết nối PostgreSQL):** Script migrate chạy bị lỗi do cấu hình DB sai.
-  * *Giải pháp:* Kiểm tra lại tất cả các biến môi trường của Database trên Render xem có khớp 100% với thông tin bên database hay chưa. Đảm bảo biến `NODE_ENV` đã được set là `production` để driver `pg` sử dụng kết nối SSL an toàn.
+5. Kiem tra frontend:
 
----
+   ```bash
+   curl -I https://habit-tracker-frontend-nn40.onrender.com/
+   ```
 
-### ❌ Lỗi 4: Git báo lỗi "Updates were rejected... non-fast-forward" khi push code
-* **Triệu chứng:** Khi bạn gõ lệnh `git push`, Git từ chối nhận code mới và báo lỗi xung đột hoặc phân nhánh.
-* **Nguyên nhân:** Nhánh trên máy local của bạn và nhánh trên GitHub đang bị lệch lịch sử commit (ví dụ: ai đó đã cập nhật trực tiếp trên GitHub trước).
-* **Cách khắc phục:**
-  1. Đồng bộ lại lịch sử code local của bạn với GitHub bằng cách chạy:
-     ```bash
-     git fetch origin develop
-     git reset --hard origin/develop
-     ```
-     *(Cảnh báo: Lệnh này sẽ ghi đè toàn bộ code local của bạn theo bản mới nhất trên GitHub, hãy chắc chắn bạn đã sao lưu các file tự chỉnh sửa trước đó).*
-  2. Sau khi đồng bộ, bạn có thể thực hiện chỉnh sửa và push một cách an toàn.
+### Deploy thu cong tren Render
+
+Trong Render Dashboard:
+
+1. Chon service backend hoac frontend.
+2. Vao tab **Manual Deploy**.
+3. Chon **Deploy latest commit**.
 
 ---
 
-## 4. Hướng Dẫn Chạy Dưới Local (Local Development)
+## 4. Xu Ly Su Co Thuong Gap
 
-### 🐳 Cách 1: Sử Dụng Docker (Khuyên dùng)
-1. Tạo file `.env` ở thư mục gốc: `cp .env.example .env`
-2. Khởi chạy hệ thống: `docker-compose up -d --build`
-3. Tạo cơ sở dữ liệu: `docker exec -it habit-tracker-backend npm run migrate`
-4. Mở trình duyệt: `http://localhost:5173`
+### Frontend khong goi duoc backend
 
-### 💻 Cách 2: Chạy Thủ Công (Không dùng Docker)
-* **Backend:**
-  ```bash
-  cd backend
-  npm install
-  cp .env.example .env  # Điền thông tin PostgreSQL local của bạn vào đây
-  npm run migrate       # Tạo bảng
-  npm run dev           # Chạy server (tự động reload)
-  ```
-* **Frontend:**
-  ```bash
-  cd frontend
-  npm install
-  echo "VITE_API_URL=http://localhost:5000" > .env
-  npm run dev
-  ```
-  Truy cập giao diện tại: `http://localhost:5173`
+Kiem tra:
+
+- Backend health check co tra `{ "ok": true }` khong.
+- Backend co bi sleep do Render free plan khong. Lan dau goi co the mat 30-60 giay.
+- Neu frontend la Static Site, bien `VITE_API_URL` phai la `https://habit-tracker-r2tw.onrender.com`.
+- Neu frontend la Docker Web Service, Nginx proxy trong `frontend/nginx.conf` phai tro dung backend reachable tu service frontend.
+
+### Backend deploy failed
+
+Kiem tra:
+
+- `backend/package.json` va `backend/package-lock.json` phai dong bo de `npm ci` chay duoc.
+- Start Command phai la `npm run migrate && npm start`.
+- Cac bien DB tren Render phai dung voi database PostgreSQL.
+- `NODE_ENV` nen dat la `production`.
+
+### Frontend van hien ban cu
+
+Thu:
+
+- Hard refresh trinh duyet bang `Ctrl + F5`.
+- Mo tab an danh.
+- Kiem tra Render service frontend da deploy commit moi nhat chua.
+- Trong Render Dashboard, chon **Manual Deploy -> Deploy latest commit**.
+
+### Git bao loi non-fast-forward khi push
+
+Dong bo lai nhanh local voi GitHub:
+
+```bash
+git pull --rebase origin develop
+git push origin develop
+```
+
+Neu co conflict, sua conflict truoc khi push lai.
+
+---
+
+## 5. Chay Local
+
+### Docker
+
+```bash
+cp .env.example .env
+docker-compose up -d --build
+docker exec -it habit-tracker-backend npm run migrate
+```
+
+Mo frontend local:
+
+```text
+http://localhost:5173
+```
+
+### Chay Thu Cong
+
+Backend:
+
+```bash
+cd backend
+npm install
+cp .env.example .env
+npm run migrate
+npm run dev
+```
+
+Frontend:
+
+```bash
+cd frontend
+npm install
+echo "VITE_API_URL=http://localhost:5000" > .env
+npm run dev
+```
+
+Mo frontend local:
+
+```text
+http://localhost:5173
+```
