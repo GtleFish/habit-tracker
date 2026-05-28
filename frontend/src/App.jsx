@@ -16,11 +16,6 @@ function App() {
   const [submitLoading, setSubmitLoading] = useState(false)
   const [apiStatus, setApiStatus] = useState('checking')
 
-  useEffect(() => {
-    checkHealth()
-    loadData()
-  }, [])
-
   const checkHealth = async () => {
     try {
       await api.checkHealth()
@@ -53,6 +48,12 @@ function App() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    checkHealth()
+    loadData()
+  }, [])
 
   const handleAddHabit = async (name, description) => {
     try {
