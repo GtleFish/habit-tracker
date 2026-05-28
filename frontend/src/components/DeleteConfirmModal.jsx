@@ -11,7 +11,7 @@ export function DeleteConfirmModal({ habitName, isOpen, onConfirm, onCancel }) {
           </div>
           <div className="modal-body">
             <p>Are you sure you want to delete <strong>"{habitName}"</strong>?</p>
-            <p className="modal-warning">⚠ This action cannot be undone.</p>
+            <p className="modal-warning">This action cannot be undone.</p>
           </div>
           <div className="modal-footer">
             <button className="btn-cancel" onClick={onCancel}>

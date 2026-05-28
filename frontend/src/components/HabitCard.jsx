@@ -88,7 +88,7 @@ export function HabitCard({ habit, logs, onDelete, onMarkComplete, onDeleteLog }
               <p className="habit-description">{habit.description}</p>
             )}
             <span className="habit-streak">
-              ✅ {completedCount}/7 ngày — {percentage}% tuần này
+               {completedCount}/7 ngày — {percentage}% tuần này
             </span>
           </div>
           <button
@@ -97,7 +97,7 @@ export function HabitCard({ habit, logs, onDelete, onMarkComplete, onDeleteLog }
             title="Xóa habit"
             aria-label={`Xóa habit ${habit.name}`}
           >
-            🗑️
+            ✕
           </button>
         </div>
 
@@ -148,7 +148,7 @@ export function HabitCard({ habit, logs, onDelete, onMarkComplete, onDeleteLog }
 
       <ConfirmModal
         isOpen={confirmOpen}
-        title="🗑️ Xóa Habit"
+        title="Xóa Habit"
         message={`Bạn có chắc muốn xóa habit "${habit.name}" không? Tất cả lịch sử sẽ bị xóa và không thể khôi phục.`}
         confirmLabel="Xóa"
         onConfirm={() => { setConfirmOpen(false); onDelete(habit.id); }}

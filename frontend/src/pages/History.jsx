@@ -38,7 +38,7 @@ export function History({ habits, logs, isLoading, error }) {
 
       {error && (
         <div className="alert alert-error" role="alert">
-          ⚠️ {error}
+           {error}
         </div>
       )}
 
@@ -53,7 +53,7 @@ export function History({ habits, logs, isLoading, error }) {
           {sortedDates.map((date) => (
             <div key={date} className="history-day">
               <div className="history-date">
-                <span className="date-icon">📅</span>
+                <span className="date-icon"> </span>
                 <span>{formatDate(date)}</span>
                 <span className="date-count">{logsByDate[date].length} habit</span>
               </div>
@@ -64,7 +64,7 @@ export function History({ habits, logs, isLoading, error }) {
                     <div className="history-item-info">
                       <span className="history-habit-name">{log.habit_name}</span>
                       {log.note && (
-                        <span className="history-note">📝 {log.note}</span>
+                        <span className="history-note"> {log.note}</span>
                       )}
                     </div>
                     <span className="history-time">

@@ -8,7 +8,6 @@ export function Sidebar({ currentPage, onNavigate }) {
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
-        <span className="brand-icon">🎯</span>
         <span className="brand-name">HabitTracker</span>
       </div>
       <nav className="sidebar-nav">
@@ -24,7 +23,7 @@ export function Sidebar({ currentPage, onNavigate }) {
         ))}
       </nav>
       <div className="sidebar-footer">
-        Build better habits ✨
+        Build better habits
       </div>
     </aside>
   );

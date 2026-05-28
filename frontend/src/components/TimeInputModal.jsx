@@ -35,13 +35,13 @@ export function TimeInputModal({ isOpen, date, habitName, existingLog, onSave, o
       return;
     }
     if ((startTime && !endTime) || (!startTime && endTime)) {
-      setError('⚠️ Vui lòng nhập cả thời gian bắt đầu và kết thúc');
+      setError(' Vui lòng nhập cả thời gian bắt đầu và kết thúc');
       return;
     }
     const [startH, startM] = startTime.split(':').map(Number);
     const [endH, endM] = endTime.split(':').map(Number);
     if (endH * 60 + endM <= startH * 60 + startM) {
-      setError('⚠️ Thời gian kết thúc phải sau thời gian bắt đầu!');
+      setError(' Thời gian kết thúc phải sau thời gian bắt đầu!');
       return;
     }
     setError('');
@@ -70,7 +70,7 @@ export function TimeInputModal({ isOpen, date, habitName, existingLog, onSave, o
           {error && <div className="modal-error">{error}</div>}
 
           {isEditing && (
-            <div className="modal-edit-badge">✏️ Đang chỉnh sửa</div>
+            <div className="modal-edit-badge"> Đang chỉnh sửa</div>
           )}
 
           <div className="time-inputs">
@@ -102,14 +102,14 @@ export function TimeInputModal({ isOpen, date, habitName, existingLog, onSave, o
           </div>
 
           <div className="time-hint">
-            💡 Để trống cả hai nếu không muốn ghi giờ
+             Để trống cả hai nếu không muốn ghi giờ
           </div>
         </div>
 
         <div className="modal-footer">
           {isEditing && (
             <button className="btn-delete-log" onClick={onDelete} title="Xóa ngày này">
-              🗑️ Xóa
+               Xóa
             </button>
           )}
           <div className="modal-footer-right">

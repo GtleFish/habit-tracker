@@ -1,8 +1,8 @@
 import express from "express";
 import cors from "cors";
 
-import habitsRoutes from "./routes/habits.routes.js";
-import logsRoutes from "./routes/logs.routes.js";
+import habitsRoutes from "./src/routes/habits.routes.js";
+import logsRoutes from "./src/routes/logs.routes.js";
 
 const app = express();
 
