@@ -38,8 +38,14 @@ function App() {
         api.getHabits(),
         api.getLogs(),
       ])
-      setHabits(habitsData || [])
-      setLogs(logsData || [])
+      const habitList = habitsData || []
+      const habitNamesById = new Map(habitList.map((habit) => [habit.id, habit.name]))
+      const enrichedLogs = (logsData || []).map((log) => ({
+        ...log,
+        habit_name: log.habit_name || habitNamesById.get(log.habit_id) || '',
+      }))
+      setHabits(habitList)
+      setLogs(enrichedLogs)
     } catch (err) {
       setError('Không thể kết nối backend. Kiểm tra server đang chạy chưa.')
       console.error(err)

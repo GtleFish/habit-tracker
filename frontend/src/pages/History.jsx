@@ -19,6 +19,7 @@ export function History({ habits, logs, isLoading, error }) {
   }, {});
 
   const sortedDates = Object.keys(logsByDate).sort((a, b) => new Date(b) - new Date(a));
+  const habitNamesById = new Map((habits || []).map((habit) => [habit.id, habit.name]));
 
   const formatDate = (dateStr) => {
     return new Date(dateStr).toLocaleDateString('vi-VN', {
@@ -62,7 +63,9 @@ export function History({ habits, logs, isLoading, error }) {
                   <div key={log.id} className="history-item">
                     <span className="check-icon">✅</span>
                     <div className="history-item-info">
-                      <span className="history-habit-name">{log.habit_name}</span>
+                      <span className="history-habit-name">
+                        {log.habit_name || habitNamesById.get(log.habit_id) || 'Habit'}
+                      </span>
                       {log.note && (
                         <span className="history-note"> {log.note}</span>
                       )}

@@ -17,7 +17,6 @@ export function Sidebar({ currentPage, onNavigate }) {
             className={`nav-item ${currentPage === item.id ? 'active' : ''}`}
             onClick={() => onNavigate(item.id)}
           >
-            <span className="nav-icon">{item.icon}</span>
             <span className="nav-label">{item.label}</span>
           </button>
         ))}
