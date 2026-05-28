@@ -44,7 +44,7 @@ export function History({ habits, logs, isLoading, error }) {
 
       {logs.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-icon">📅</div>
+          <div className="empty-icon"></div>
           <h3>Chưa có lịch sử</h3>
           <p>Bắt đầu đánh dấu hoàn thành habit để xem lịch sử tại đây!</p>
         </div>

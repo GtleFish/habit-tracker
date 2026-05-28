@@ -107,7 +107,7 @@ export function AddHabit({ onSubmit, isLoading, error }) {
                 <span className="spinner-sm"></span> Đang tạo...
               </>
             ) : (
-              <>➕ Tạo {habits.filter(h => h.name.trim()).length > 1 ? `${habits.filter(h => h.name.trim()).length} Habits` : 'Habit'}</>
+              <>Tạo {habits.filter(h => h.name.trim()).length > 1 ? `${habits.filter(h => h.name.trim()).length} Habits` : 'Habit'}</>
             )}
           </button>
         </div>

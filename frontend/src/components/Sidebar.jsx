@@ -1,8 +1,8 @@
 export function Sidebar({ currentPage, onNavigate }) {
   const navItems = [
-    { id: 'habits', label: 'My Habits', icon: '📋' },
-    { id: 'add', label: 'Add Habit', icon: '➕' },
-    { id: 'history', label: 'History', icon: '📅' },
+    { id: 'habits', label: 'My Habits' },
+    { id: 'add', label: 'Add Habit'},
+    { id: 'history', label: 'History' },
   ];
 
   return (

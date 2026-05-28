@@ -54,7 +54,7 @@ export function HabitsList({ habits, logs, onDelete, onMarkComplete, onDeleteLog
 
       {habits.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-icon">📋</div>
+          <div className="empty-icon"></div>
           <h3>Chưa có habit nào</h3>
           <p>Tạo habit đầu tiên để bắt đầu theo dõi!</p>
         </div>

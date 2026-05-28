@@ -62,7 +62,7 @@ export function TimeInputModal({ isOpen, date, habitName, existingLog, onSave, o
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onCancel()}>
       <div className="modal-content">
         <div className="modal-header">
-          <h3>✅ {habitName} — {formatDateVN(date)}</h3>
+          <h3> {habitName} — {formatDateVN(date)}</h3>
           <button className="modal-close" onClick={onCancel} aria-label="Đóng">✕</button>
         </div>
 
