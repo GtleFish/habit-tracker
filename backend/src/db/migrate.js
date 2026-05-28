@@ -42,11 +42,11 @@ async function runMigrations() {
       await pool.query(sql);
     }
 
-    console.log("✅ Migrations completed successfully!");
+    console.log(" Migrations completed successfully!");
     await pool.end();
     process.exit(0);
   } catch (error) {
-    console.error("❌ Migration failed:", error.message);
+    console.error(" Migration failed:", error.message);
     await pool.end();
     process.exit(1);
   }
