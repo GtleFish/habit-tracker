@@ -1,7 +1,27 @@
+import dotenv from "dotenv";
 import app from "../app.js";
+import pool from "./db/index.js";
+//
+// Load environment variables
+dotenv.config();
 
 const PORT = process.env.PORT || 5000;
+//
+// Test database connection before starting server
+async function startServer() {
+  try {
+    console.log("Testing database connection...");
+    await pool.query("SELECT NOW()");
+    console.log(" Database connected successfully!");
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error(" Failed to connect to database:", error.message);
+    console.error("Please check your database configuration in .env file");
+    process.exit(1);
+  }
+}
+
+startServer();

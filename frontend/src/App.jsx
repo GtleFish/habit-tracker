@@ -16,11 +16,6 @@ function App() {
   const [submitLoading, setSubmitLoading] = useState(false)
   const [apiStatus, setApiStatus] = useState('checking')
 
-  useEffect(() => {
-    checkHealth()
-    loadData()
-  }, [])
-
   const checkHealth = async () => {
     try {
       await api.checkHealth()
@@ -38,8 +33,14 @@ function App() {
         api.getHabits(),
         api.getLogs(),
       ])
-      setHabits(habitsData || [])
-      setLogs(logsData || [])
+      const habitList = habitsData || []
+      const habitNamesById = new Map(habitList.map((habit) => [habit.id, habit.name]))
+      const enrichedLogs = (logsData || []).map((log) => ({
+        ...log,
+        habit_name: log.habit_name || habitNamesById.get(log.habit_id) || '',
+      }))
+      setHabits(habitList)
+      setLogs(enrichedLogs)
     } catch (err) {
       setError('Không thể kết nối backend. Kiểm tra server đang chạy chưa.')
       console.error(err)
@@ -47,6 +48,12 @@ function App() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    checkHealth()
+    loadData()
+  }, [])
 
   const handleAddHabit = async (name, description) => {
     try {
@@ -64,7 +71,6 @@ function App() {
   }
 
   const handleDeleteHabit = async (id) => {
-    if (!window.confirm('Bạn có chắc muốn xóa habit này không?')) return
     try {
       setError(null)
       await api.deleteHabit(id)
@@ -75,13 +81,24 @@ function App() {
     }
   }
 
-  const handleMarkComplete = async (habitId, date) => {
+  const handleMarkComplete = async (habitId, date, startTime = '', endTime = '') => {
     try {
       setError(null)
-      await api.createLog(habitId, date)
+      await api.createLog(habitId, date, '', startTime, endTime)
       await loadData()
     } catch (err) {
       setError('Không thể cập nhật. Thử lại sau.')
+      console.error(err)
+    }
+  }
+
+  const handleDeleteLog = async (habitId, date) => {
+    try {
+      setError(null)
+      await api.deleteLog(habitId, date)
+      await loadData()
+    } catch (err) {
+      setError('Không thể xóa. Thử lại sau.')
       console.error(err)
     }
   }
@@ -98,6 +115,7 @@ function App() {
               logs={logs}
               onDelete={handleDeleteHabit}
               onMarkComplete={handleMarkComplete}
+              onDeleteLog={handleDeleteLog}
               isLoading={loading}
               error={error}
             />

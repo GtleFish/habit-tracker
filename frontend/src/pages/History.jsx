@@ -19,6 +19,7 @@ export function History({ habits, logs, isLoading, error }) {
   }, {});
 
   const sortedDates = Object.keys(logsByDate).sort((a, b) => new Date(b) - new Date(a));
+  const habitNamesById = new Map((habits || []).map((habit) => [habit.id, habit.name]));
 
   const formatDate = (dateStr) => {
     return new Date(dateStr).toLocaleDateString('vi-VN', {
@@ -38,13 +39,13 @@ export function History({ habits, logs, isLoading, error }) {
 
       {error && (
         <div className="alert alert-error" role="alert">
-          ⚠️ {error}
+           {error}
         </div>
       )}
 
       {logs.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-icon">📅</div>
+          <div className="empty-icon"></div>
           <h3>Chưa có lịch sử</h3>
           <p>Bắt đầu đánh dấu hoàn thành habit để xem lịch sử tại đây!</p>
         </div>
@@ -53,7 +54,7 @@ export function History({ habits, logs, isLoading, error }) {
           {sortedDates.map((date) => (
             <div key={date} className="history-day">
               <div className="history-date">
-                <span className="date-icon">📅</span>
+                <span className="date-icon"> </span>
                 <span>{formatDate(date)}</span>
                 <span className="date-count">{logsByDate[date].length} habit</span>
               </div>
@@ -62,9 +63,11 @@ export function History({ habits, logs, isLoading, error }) {
                   <div key={log.id} className="history-item">
                     <span className="check-icon">✅</span>
                     <div className="history-item-info">
-                      <span className="history-habit-name">{log.habit_name}</span>
+                      <span className="history-habit-name">
+                        {log.habit_name || habitNamesById.get(log.habit_id) || 'Habit'}
+                      </span>
                       {log.note && (
-                        <span className="history-note">📝 {log.note}</span>
+                        <span className="history-note"> {log.note}</span>
                       )}
                     </div>
                     <span className="history-time">

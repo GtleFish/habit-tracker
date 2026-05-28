@@ -6,7 +6,7 @@ Backend API cho ứng dụng Habit Tracker sử dụng Node.js, Express và Post
 
 - Node.js >= 18
 - PostgreSQL >= 14
-
+#
 ## Cài đặt
 
 1. Cài đặt dependencies:

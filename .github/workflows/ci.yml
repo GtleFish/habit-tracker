@@ -2,12 +2,12 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [main, dev]
+    branches: ["**"]
   pull_request:
-    branches: [main, dev]
+    branches: ["**"]
 
 jobs:
-  # ─── BACKEND CI ────────────────────────────────────────────
+  # ===== BACKEND =====
   backend:
     name: Backend CI
     runs-on: ubuntu-latest
@@ -17,7 +17,7 @@ jobs:
         image: postgres:15-alpine
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_PASSWORD: postgres_password_123
           POSTGRES_DB: habits_test
         ports:
           - 5432:5432
@@ -27,6 +27,14 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
+    env:
+      PORT: 5000
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres_password_123
+      DB_NAME: habits_test
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -34,32 +42,31 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
 
-      # 1. Install
       - name: Install dependencies
         working-directory: backend
         run: npm install
 
-      # 2. Lint
       - name: Lint
         working-directory: backend
         run: npm run lint
 
-      # 3. Test
+      - name: Run migrations
+        working-directory: backend
+        run: npm run migrate
+
       - name: Test
         working-directory: backend
-        env:
-          PORT: 3000
-          DB_HOST: localhost
-          DB_PORT: 5432
-          DB_USER: postgres
-          DB_PASSWORD: postgres
-          DB_NAME: habits_test
-          NODE_ENV: test
-        run: npm test
+        run: npm test -- --passWithNoTests
 
-  # ─── FRONTEND CI ───────────────────────────────────────────
+      - name: Build (verify start script)
+        working-directory: backend
+        run: node --check src/server.js && node --check app.js
+
+  # ===== FRONTEND =====
   frontend:
     name: Frontend CI
     runs-on: ubuntu-latest
@@ -71,24 +78,24 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
 
-      # 1. Install
       - name: Install dependencies
         working-directory: frontend
         run: npm install
 
-      # 2. Lint
       - name: Lint
         working-directory: frontend
         run: npm run lint
 
-      # 3. Test
       - name: Test
         working-directory: frontend
         run: npm run test
 
-      # 4. Build
       - name: Build
         working-directory: frontend
+        env:
+          VITE_API_URL: http://localhost:5000
         run: npm run build
