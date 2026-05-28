@@ -52,7 +52,7 @@ jobs:
 
       - name: Lint
         working-directory: backend
-        run: npx eslint src/ --ext .js --max-warnings=0
+        run: npm run lint
 
       - name: Run migrations
         working-directory: backend
