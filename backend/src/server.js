@@ -12,13 +12,13 @@ async function startServer() {
   try {
     console.log("Testing database connection...");
     await pool.query("SELECT NOW()");
-    console.log("✅ Database connected successfully!");
+    console.log(" Database connected successfully!");
 
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
   } catch (error) {
-    console.error("❌ Failed to connect to database:", error.message);
+    console.error(" Failed to connect to database:", error.message);
     console.error("Please check your database configuration in .env file");
     process.exit(1);
   }

@@ -2,9 +2,9 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [main, develop]
+    branches: ["**"]
   pull_request:
-    branches: [main, develop]
+    branches: ["**"]
 
 jobs:
   # ===== BACKEND =====
@@ -27,6 +27,14 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
+    env:
+      PORT: 5000
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres_password_123
+      DB_NAME: habits_test
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -34,35 +42,29 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
           cache-dependency-path: backend/package-lock.json
 
       - name: Install dependencies
-        run: npm ci
         working-directory: backend
+        run: npm ci
+
+      - name: Lint
+        working-directory: backend
+        run: npx eslint src/ --ext .js --max-warnings=0
 
       - name: Run migrations
+        working-directory: backend
         run: npm run migrate
-        working-directory: backend
-        env:
-          PORT: 5000
-          DB_HOST: localhost
-          DB_PORT: 5432
-          DB_USER: postgres
-          DB_PASSWORD: postgres_password_123
-          DB_NAME: habits_test
 
-      - name: Run tests
-        run: npm test --if-present
+      - name: Test
         working-directory: backend
-        env:
-          PORT: 5000
-          DB_HOST: localhost
-          DB_PORT: 5432
-          DB_USER: postgres
-          DB_PASSWORD: postgres_password_123
-          DB_NAME: habits_test
+        run: npm test
+
+      - name: Build (verify start script)
+        working-directory: backend
+        run: node --check src/server.js && node --check app.js
 
   # ===== FRONTEND =====
   frontend:
@@ -76,37 +78,24 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
-        run: npm ci
         working-directory: frontend
+        run: npm ci
 
       - name: Lint
-        run: npm run lint
         working-directory: frontend
+        run: npm run lint
+
+      - name: Test
+        working-directory: frontend
+        run: npm test --if-present
 
       - name: Build
-        run: npm run build
         working-directory: frontend
         env:
           VITE_API_URL: http://localhost:5000
-
-  # ===== DOCKER BUILD =====
-  docker:
-    name: Docker Build
-    runs-on: ubuntu-latest
-    needs: [backend, frontend]
-    if: github.event_name == 'push'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Build backend image
-        run: docker build -t habit-tracker-backend ./backend
-
-      - name: Build frontend image
-        run: docker build -t habit-tracker-frontend ./frontend
+        run: npm run build
