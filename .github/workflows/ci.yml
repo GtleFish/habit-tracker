@@ -7,9 +7,9 @@ on:
     branches: [main, dev]
 
 jobs:
-  # ─── BACKEND ───────────────────────────────────────────────
-  backend-lint-test:
-    name: Backend — Lint & Test
+  # ─── BACKEND CI ────────────────────────────────────────────
+  backend:
+    name: Backend CI
     runs-on: ubuntu-latest
 
     services:
@@ -35,14 +35,19 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-          cache-dependency-path: backend/package-lock.json
 
-      - name: Install backend dependencies
+      # 1. Install
+      - name: Install dependencies
         working-directory: backend
-        run: npm ci
+        run: npm install
 
-      - name: Run backend tests
+      # 2. Lint
+      - name: Lint
+        working-directory: backend
+        run: npm run lint
+
+      # 3. Test
+      - name: Test
         working-directory: backend
         env:
           PORT: 3000
@@ -54,9 +59,9 @@ jobs:
           NODE_ENV: test
         run: npm test
 
-  # ─── FRONTEND ──────────────────────────────────────────────
-  frontend-lint-build:
-    name: Frontend — Lint & Build
+  # ─── FRONTEND CI ───────────────────────────────────────────
+  frontend:
+    name: Frontend CI
     runs-on: ubuntu-latest
 
     steps:
@@ -67,17 +72,23 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
 
-      - name: Install frontend dependencies
+      # 1. Install
+      - name: Install dependencies
         working-directory: frontend
-        run: npm ci
+        run: npm install
 
-      - name: Lint frontend
+      # 2. Lint
+      - name: Lint
         working-directory: frontend
         run: npm run lint
 
-      - name: Build frontend
+      # 3. Test
+      - name: Test
+        working-directory: frontend
+        run: npm run test
+
+      # 4. Build
+      - name: Build
         working-directory: frontend
         run: npm run build
