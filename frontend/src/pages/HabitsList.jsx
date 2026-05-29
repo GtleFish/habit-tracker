@@ -4,7 +4,6 @@ export function HabitsList({ habits, logs, onDelete, onMarkComplete, onDeleteLog
   // Tính stats
   const today = new Date().toISOString().split('T')[0];
   const completedToday = logs.filter(l => l.completed_date?.split('T')[0] === today).length;
-  const totalLogs = logs.length;
   const weekAgo = new Date();
   weekAgo.setDate(weekAgo.getDate() - 7);
   const weekLogs = logs.filter(l => new Date(l.completed_date) >= weekAgo).length;

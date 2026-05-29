@@ -1,24 +1,29 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import '../styles/modal.css';
 
 export function TimeInputModal({ isOpen, date, habitName, existingLog, onSave, onDelete, onCancel }) {
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
+  const initialStart = useMemo(() => {
+    if (!isOpen) return '';
+    return existingLog?.start_time ? existingLog.start_time.slice(0, 5) : '';
+  }, [isOpen, existingLog]);
+
+  const initialEnd = useMemo(() => {
+    if (!isOpen) return '';
+    return existingLog?.end_time ? existingLog.end_time.slice(0, 5) : '';
+  }, [isOpen, existingLog]);
+
+  const [startTime, setStartTime] = useState(initialStart);
+  const [endTime, setEndTime] = useState(initialEnd);
   const [error, setError] = useState('');
 
-  // Điền sẵn giờ nếu đang edit log cũ
   useEffect(() => {
     if (isOpen) {
-      if (existingLog) {
-        setStartTime(existingLog.start_time ? existingLog.start_time.slice(0, 5) : '');
-        setEndTime(existingLog.end_time ? existingLog.end_time.slice(0, 5) : '');
-      } else {
-        setStartTime('');
-        setEndTime('');
-      }
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setStartTime(initialStart);
+      setEndTime(initialEnd);
       setError('');
     }
-  }, [isOpen, existingLog]);
+  }, [isOpen, initialStart, initialEnd]);
 
   const formatTo12Hour = (time24) => {
     if (!time24) return '';

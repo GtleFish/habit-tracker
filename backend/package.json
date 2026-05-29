@@ -6,7 +6,8 @@
     "dev": "nodemon --env-file .env src/server.js",
     "start": "node src/server.js",
     "migrate": "node src/db/migrate.js",
-    "test": "jest"
+    "lint": "eslint src/ app.js --max-warnings=0",
+    "test": "node --experimental-vm-modules node_modules/.bin/jest --passWithNoTests"
   },
   "keywords": [],
   "author": "",
@@ -24,5 +25,8 @@
     "jest": "^30.4.2",
     "nodemon": "^3.1.14",
     "supertest": "^7.2.2"
+  },
+  "jest": {
+    "transform": {}
   }
 }

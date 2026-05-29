@@ -1,4 +1,4 @@
-# Habit Tracker Backend
+# Habit Tracker Backend API
 
 Backend API cho ứng dụng Habit Tracker sử dụng Node.js, Express và PostgreSQL.
 
