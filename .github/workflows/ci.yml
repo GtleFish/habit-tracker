@@ -2,15 +2,9 @@ name: CI Pipeline
 
 on:
   push:
-<<<<<<< HEAD
-    branches: ["main,  dev"]
-  pull_request:
-    branches: ["main,  dev"]
-=======
     branches: ["main, dev"]
   pull_request:
     branches: ["main, dev"]
->>>>>>> f5e76724d5221f81798aea65c56489693a677421
 
 jobs:
   # ===== BACKEND =====
