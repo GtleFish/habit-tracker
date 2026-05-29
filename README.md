@@ -1,4 +1,4 @@
-# Habit Tracker
+### Habit Tracker
 
 Ứng dụng theo dõi thói quen hàng ngày, xây dựng với React (frontend) và Node.js/Express + PostgreSQL (backend).
 
